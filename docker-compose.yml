@@ -1,19 +1,10 @@
-services:
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+# PostgreSQL сюда сознательно не включён — он ставится нативно на хост
+# (apt), общий для нескольких проектов на сервере, и живёт своим циклом,
+# отдельно от `docker compose down` этого проекта. Настройка — в README.md
+# ("PostgreSQL на хосте"). Контейнеры достают его через host.docker.internal
+# (см. extra_hosts у web/celery_worker/celery_beat).
 
+services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -22,9 +13,9 @@ services:
     build: .
     restart: unless-stopped
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_started
     volumes:
@@ -37,9 +28,9 @@ services:
     command: ["celery", "-A", "config", "worker", "-l", "info"]
     entrypoint: ["docker/celery-entrypoint.sh"]
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_started
     volumes:
@@ -51,9 +42,9 @@ services:
     command: ["celery", "-A", "config", "beat", "-l", "info"]
     entrypoint: ["docker/celery-entrypoint.sh"]
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_started
 
@@ -70,6 +61,5 @@ services:
       - web
 
 volumes:
-  postgres_data:
   static_data:
   media_data:

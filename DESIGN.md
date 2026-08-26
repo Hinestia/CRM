@@ -187,21 +187,32 @@ smoke-теста автоматически записалось 16 записе
 
 ## 10. docker-compose
 
+PostgreSQL **сознательно не входит** в `docker-compose.yml` этого проекта —
+ставится нативно на хост (`apt install postgresql`). Причина: на сервере
+предполагается несколько независимых проектов/сервисов, использующих один
+и тот же Postgres, и его жизненный цикл (бэкапы, апгрейды, доступность)
+не должен зависеть от `docker compose down` конкретно этой CRM. Подробности
+установки и настройки доступа из Docker-сети — в README.md, раздел
+"PostgreSQL на хосте".
+
 | Сервис | Роль |
 |---|---|
-| `db` | PostgreSQL 16, именованный volume `postgres_data` |
 | `redis` | брокер и result backend для Celery |
-| `web` | Django + Gunicorn; entrypoint ждёт БД, применяет миграции и `collectstatic` |
+| `web` | Django + Gunicorn; entrypoint ждёт БД на хосте, применяет миграции и `collectstatic` |
 | `celery_worker` | асинхронные задачи: PDF, email, начисления по требованию |
 | `celery_beat` | расписание: начисления, пеня, уведомления по договорам |
 | `nginx` | отдаёт `/static/` и `/media/`, проксирует остальное на `web` |
+
+`web`/`celery_worker`/`celery_beat` достают Postgres через
+`extra_hosts: host.docker.internal:host-gateway` — так контейнер видит
+хост независимо от подсети, которую Docker выдал сети compose-проекта.
 
 `celery_worker`/`celery_beat` используют отдельный entrypoint
 (`docker/celery-entrypoint.sh`) — он только ждёт БД, но **не** гоняет
 `migrate`, чтобы миграции не запускались параллельно из трёх контейнеров
 одновременно.
 
-Быстрый старт:
+Быстрый старт (после того как PostgreSQL уже установлен и настроен на хосте):
 ```bash
 cp .env.example .env   # заполнить пароли/секреты
 docker compose up -d --build

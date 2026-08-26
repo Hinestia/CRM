@@ -9,22 +9,81 @@
 ## Стек
 
 Django 5 + PostgreSQL + Celery/Redis (фоновые задачи и расписание) +
-WeasyPrint (PDF-квитанции), развёртывание через Docker Compose.
+WeasyPrint (PDF-квитанции). Web/Redis/Celery/Nginx — в Docker Compose;
+**PostgreSQL — нативно на хосте** (см. ниже), общий для нескольких проектов
+на сервере и не зависящий от жизненного цикла `docker compose`.
 
-## Быстрый старт
+## PostgreSQL на хосте
+
+Ставится один раз, отдельно от `docker compose up`/`down` этого проекта.
 
 ```bash
-cp .env.example .env   # заполнить пароли/секреты
+sudo apt update
+sudo apt install -y postgresql postgresql-contrib
+```
+
+Создать базу и пользователя (значения должны совпадать с `.env`):
+
+```bash
+sudo -u postgres psql -c "CREATE USER crm WITH PASSWORD 'сюда-свой-пароль';"
+sudo -u postgres psql -c "CREATE DATABASE crm OWNER crm;"
+```
+
+Контейнеры (`web`, `celery_worker`, `celery_beat`) достают Postgres с хоста
+через `host.docker.internal` — по умолчанию нативный PostgreSQL слушает
+только `localhost` и не пускает подключения из Docker-сети. Нужно открыть
+это явно:
+
+```bash
+# Найти файлы конфигурации (версия у вас может отличаться от 16)
+sudo -u postgres psql -c "SHOW config_file;"
+sudo -u postgres psql -c "SHOW hba_file;"
+```
+
+В `postgresql.conf`:
+```
+listen_addresses = 'localhost,172.17.0.1'
+```
+(`172.17.0.1` — стандартный адрес хоста в дефолтной Docker-сети `bridge`;
+если у вас Docker создаёт сети с другими подсетями — проще и надёжнее
+`listen_addresses = '*'`, доступ извне сервера при этом всё равно
+закрывается файрволом, см. ниже).
+
+В `pg_hba.conf` добавить строку (доступ только из приватных Docker-подсетей):
+```
+host    crm    crm    172.16.0.0/12    scram-sha-256
+```
+
+Перезапустить:
+```bash
+sudo systemctl restart postgresql
+sudo systemctl enable postgresql
+```
+
+**Обязательно закрыть порт 5432 от внешнего мира** — Postgres нужен только
+локально/из Docker-сети этого сервера, не из интернета:
+```bash
+sudo ufw deny 5432/tcp
+```
+(если `ufw` не включён — просто не пробрасывайте порт 5432 никуда и не
+открывайте его на роутере).
+
+## Быстрый старт (Docker Compose: web/redis/celery/nginx)
+
+```bash
+cp .env.example .env   # заполнить POSTGRES_PASSWORD и остальные секреты
 docker compose up -d --build
 docker compose exec web python manage.py createsuperuser
 ```
 
 Admin доступен на `http://localhost/admin/`.
 
-## Разработка без Docker
+## Разработка без Docker вообще
 
-Нужны локально установленные и запущенные PostgreSQL и Redis (Celery-задачи
-без Redis не запустятся, но `runserver`/`migrate` для них не требуются).
+Нужен запущенный локальный PostgreSQL (см. выше, без шага с
+`host.docker.internal`/`pg_hba.conf` — раз всё на одной машине без Docker,
+достаточно `listen_addresses = 'localhost'` по умолчанию) и Redis, если
+нужны Celery-задачи (`runserver`/`migrate` без Redis работают).
 
 ```bash
 python -m venv .venv
@@ -36,10 +95,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# В .env обязательно замените POSTGRES_HOST=db на POSTGRES_HOST=localhost
-# (значение "db" — это имя сервиса в docker-compose, вне Docker оно не
-# резолвится) и создайте в PostgreSQL базу/пользователя с этими данными:
-#   createdb crm && createuser crm --password
+# Замените POSTGRES_HOST=host.docker.internal на POSTGRES_HOST=localhost
 
 python manage.py migrate
 python manage.py createsuperuser

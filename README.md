@@ -23,13 +23,31 @@ Admin доступен на `http://localhost/admin/`.
 
 ## Разработка без Docker
 
+Нужны локально установленные и запущенные PostgreSQL и Redis (Celery-задачи
+без Redis не запустятся, но `runserver`/`migrate` для них не требуются).
+
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+# Linux/macOS:
+source .venv/bin/activate
+# Windows (PowerShell):
+.venv\Scripts\Activate.ps1
+
 pip install -r requirements.txt
-# запустить локальный PostgreSQL и Redis, задать переменные из .env.example
+
+cp .env.example .env
+# В .env обязательно замените POSTGRES_HOST=db на POSTGRES_HOST=localhost
+# (значение "db" — это имя сервиса в docker-compose, вне Docker оно не
+# резолвится) и создайте в PostgreSQL базу/пользователя с этими данными:
+#   createdb crm && createuser crm --password
+
 python manage.py migrate
+python manage.py createsuperuser
 python manage.py runserver
 ```
+
+Файл `.env` подхватывается автоматически (`config/settings.py` вызывает
+`load_dotenv()`) — отдельно экспортировать переменные не нужно.
 
 ## Полезные команды
 

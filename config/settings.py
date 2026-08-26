@@ -6,8 +6,14 @@ import os
 from pathlib import Path
 
 from celery.schedules import crontab
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Подхватываем .env при локальном запуске (manage.py/gunicorn/celery вне
+# Docker). В самом docker-compose переменные приходят через env_file и уже
+# есть в окружении контейнера — load_dotenv() их не перезаписывает.
+load_dotenv(BASE_DIR / ".env")
 
 
 def env_bool(name, default=False):

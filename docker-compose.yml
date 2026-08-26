@@ -1,8 +1,15 @@
 # PostgreSQL сюда сознательно не включён — он ставится нативно на хост
 # (apt), общий для нескольких проектов на сервере, и живёт своим циклом,
 # отдельно от `docker compose down` этого проекта. Настройка — в README.md
-# ("PostgreSQL на хосте"). Контейнеры достают его через host.docker.internal
-# (см. extra_hosts у web/celery_worker/celery_beat).
+# ("PostgreSQL на хосте").
+#
+# Подсеть compose-проекта зафиксирована ниже (networks.default.ipam) —
+# без этого Docker выдаёт её динамически (172.18.0.0/16, 172.19.0.0/16...),
+# а `host.docker.internal:host-gateway` в некоторых конфигурациях резолвится
+# в адрес ДРУГОЙ, дефолтной сети docker0, а не в шлюз этой сети — из
+# контейнера пакеты до Postgres на хосте тогда просто не доходят. Поэтому
+# контейнеры обращаются к Postgres по фиксированному IP шлюза этой сети
+# (POSTGRES_HOST=172.28.0.1 в .env), а не по имени host.docker.internal.
 
 services:
   redis:
@@ -13,8 +20,6 @@ services:
     build: .
     restart: unless-stopped
     env_file: .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       redis:
         condition: service_started
@@ -28,8 +33,6 @@ services:
     command: ["celery", "-A", "config", "worker", "-l", "info"]
     entrypoint: ["docker/celery-entrypoint.sh"]
     env_file: .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       redis:
         condition: service_started
@@ -42,8 +45,6 @@ services:
     command: ["celery", "-A", "config", "beat", "-l", "info"]
     entrypoint: ["docker/celery-entrypoint.sh"]
     env_file: .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       redis:
         condition: service_started
@@ -59,6 +60,14 @@ services:
       - media_data:/app/media:ro
     depends_on:
       - web
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+          gateway: 172.28.0.1
 
 volumes:
   static_data:

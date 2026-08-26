@@ -203,9 +203,15 @@ PostgreSQL **сознательно не входит** в `docker-compose.yml` 
 | `celery_beat` | расписание: начисления, пеня, уведомления по договорам |
 | `nginx` | отдаёт `/static/` и `/media/`, проксирует остальное на `web` |
 
-`web`/`celery_worker`/`celery_beat` достают Postgres через
-`extra_hosts: host.docker.internal:host-gateway` — так контейнер видит
-хост независимо от подсети, которую Docker выдал сети compose-проекта.
+Подсеть compose-проекта закреплена явно (`networks.default.ipam` —
+`172.28.0.0/24`, шлюз `172.28.0.1`), и `web`/`celery_worker`/`celery_beat`
+обращаются к Postgres на хосте по этому фиксированному IP шлюза (через
+`POSTGRES_HOST` в `.env`). Изначально использовался
+`extra_hosts: host.docker.internal:host-gateway`, но на практике это имя
+иногда резолвилось в адрес дефолтной сети `docker0`, а не в шлюз сети
+именно этого compose-проекта — пакеты уходили не туда и просто зависали
+без ошибки (диагностировать сложнее, чем явный отказ). Фиксированный IP
+убирает эту неоднозначность.
 
 `celery_worker`/`celery_beat` используют отдельный entrypoint
 (`docker/celery-entrypoint.sh`) — он только ждёт БД, но **не** гоняет

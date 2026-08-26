@@ -30,9 +30,15 @@ sudo -u postgres psql -c "CREATE DATABASE crm OWNER crm;"
 ```
 
 Контейнеры (`web`, `celery_worker`, `celery_beat`) достают Postgres с хоста
-через `host.docker.internal` — по умолчанию нативный PostgreSQL слушает
-только `localhost` и не пускает подключения из Docker-сети. Нужно открыть
-это явно:
+по фиксированному IP `172.28.0.1` — это шлюз Docker-сети compose-проекта,
+явно закреплённый в `docker-compose.yml` (`networks.default.ipam`), а не
+`host.docker.internal`: в некоторых конфигурациях Docker резолвит это имя
+в адрес дефолтной сети `docker0`, а не в шлюз сети конкретного проекта —
+пакеты в этом случае уходят не туда и просто зависают вместо явной ошибки.
+Фиксированный IP снимает эту неоднозначность полностью.
+
+По умолчанию нативный PostgreSQL слушает только `localhost` и не пускает
+подключения из Docker-сети. Нужно открыть это явно:
 
 ```bash
 # Найти файлы конфигурации (версия у вас может отличаться от 16)
@@ -42,14 +48,12 @@ sudo -u postgres psql -c "SHOW hba_file;"
 
 В `postgresql.conf`:
 ```
-listen_addresses = 'localhost,172.17.0.1'
+listen_addresses = 'localhost,172.28.0.1'
 ```
-(`172.17.0.1` — стандартный адрес хоста в дефолтной Docker-сети `bridge`;
-если у вас Docker создаёт сети с другими подсетями — проще и надёжнее
-`listen_addresses = '*'`, доступ извне сервера при этом всё равно
-закрывается файрволом, см. ниже).
 
-В `pg_hba.conf` добавить строку (доступ только из приватных Docker-подсетей):
+В `pg_hba.conf` добавить строку (доступ только из приватных Docker-подсетей,
+`172.16.0.0/12` покрывает и `172.28.0.0/24`, и `docker0`, и подсети других
+compose-проектов на этом сервере):
 ```
 host    crm    crm    172.16.0.0/12    scram-sha-256
 ```
@@ -60,10 +64,11 @@ sudo systemctl restart postgresql
 sudo systemctl enable postgresql
 ```
 
-**Обязательно закрыть порт 5432 от внешнего мира** — Postgres нужен только
-локально/из Docker-сети этого сервера, не из интернета:
+**Обязательно открыть порт 5432 только для Docker-подсетей, не для всего
+мира** — по умолчанию `ufw` (если включён) молча дропает всё, что не
+разрешено явно, что выглядит как зависание, а не понятная ошибка:
 ```bash
-sudo ufw deny 5432/tcp
+sudo ufw allow from 172.16.0.0/12 to any port 5432 proto tcp
 ```
 (если `ufw` не включён — просто не пробрасывайте порт 5432 никуда и не
 открывайте его на роутере).
@@ -81,7 +86,7 @@ Admin доступен на `http://localhost/admin/`.
 ## Разработка без Docker вообще
 
 Нужен запущенный локальный PostgreSQL (см. выше, без шага с
-`host.docker.internal`/`pg_hba.conf` — раз всё на одной машине без Docker,
+`pg_hba.conf`/фиксированным IP — раз всё на одной машине без Docker,
 достаточно `listen_addresses = 'localhost'` по умолчанию) и Redis, если
 нужны Celery-задачи (`runserver`/`migrate` без Redis работают).
 
@@ -95,7 +100,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# Замените POSTGRES_HOST=host.docker.internal на POSTGRES_HOST=localhost
+# Замените POSTGRES_HOST=172.28.0.1 на POSTGRES_HOST=localhost
 
 python manage.py migrate
 python manage.py createsuperuser

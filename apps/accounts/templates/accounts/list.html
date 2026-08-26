@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Лицевые счета{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <h1>Лицевые счета</h1>
+    <a class="btn" href="{% url 'accounts:create' %}">+ Новый лицевой счёт</a>
+</div>
+
+<form class="search-bar" method="get">
+    <input type="text" name="q" value="{{ q }}" placeholder="Номер ЛС, адрес, ФИО нанимателя...">
+    <select name="debt">
+        <option value="">Все статусы</option>
+        <option value="debt" {% if debt_filter == "debt" %}selected{% endif %}>С задолженностью</option>
+        <option value="no_debt" {% if debt_filter == "no_debt" %}selected{% endif %}>Без задолженности</option>
+    </select>
+    <button class="btn btn-secondary" type="submit">Найти</button>
+</form>
+
+<div class="card">
+    <table>
+        <thead>
+        <tr>
+            <th>№ ЛС</th><th>Адрес</th><th>Статус</th><th>Прописано</th><th>Сальдо</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for account in page %}
+            <tr>
+                <td><a href="{% url 'accounts:detail' account.pk %}">{{ account.number }}</a></td>
+                <td>{{ account.unit.house }}, кв./пом. {{ account.unit.number }}</td>
+                <td>
+                    {% if account.status == "active" %}<span class="badge badge-success">Открыт</span>
+                    {% else %}<span class="badge badge-muted">Закрыт</span>{% endif %}
+                </td>
+                <td>{{ account.registered_count }}</td>
+                <td class="mono">
+                    {% if account.last_closing_balance > 0 %}
+                        <span class="badge badge-danger">{{ account.last_closing_balance|floatformat:2 }}</span>
+                    {% else %}
+                        {{ account.last_closing_balance|floatformat:2|default:"—" }}
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="muted">Ничего не найдено.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page.has_other_pages %}
+<div class="pagination">
+    {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}&q={{ q }}&debt={{ debt_filter }}">← Назад</a>{% endif %}
+    <span class="current">{{ page.number }} из {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a href="?page={{ page.next_page_number }}&q={{ q }}&debt={{ debt_filter }}">Вперёд →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

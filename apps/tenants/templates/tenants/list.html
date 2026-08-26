@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Наниматели{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <h1>Наниматели</h1>
+    <a class="btn" href="{% url 'tenants:create' %}">+ Новый наниматель</a>
+</div>
+
+<form class="search-bar" method="get">
+    <input type="text" name="q" value="{{ q }}" placeholder="ФИО, телефон, паспорт...">
+    <button class="btn btn-secondary" type="submit">Найти</button>
+</form>
+
+<div class="card">
+    <table>
+        <thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th></tr></thead>
+        <tbody>
+        {% for tenant in tenants %}
+            <tr>
+                <td><a href="{% url 'tenants:detail' tenant.pk %}">{{ tenant.full_name }}</a></td>
+                <td>{{ tenant.phone|default:"—" }}</td>
+                <td>{{ tenant.email|default:"—" }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="3" class="muted">Наниматели не заведены.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

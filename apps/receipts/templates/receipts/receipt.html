@@ -43,18 +43,18 @@
                 <td>{{ line.service.name }}</td>
                 <td>{{ line.rate }}</td>
                 <td>{{ line.volume }} {{ line.service.unit_of_measure }}</td>
-                <td class="amount">{{ line.amount }}</td>
+                <td class="amount">{{ line.amount|floatformat:2 }}</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
     <table class="summary" style="width:auto;">
-        <tr><td class="label">Входящее сальдо:</td><td class="amount">{{ charge.opening_balance }}</td></tr>
-        <tr><td class="label">Начислено:</td><td class="amount">{{ charge.accrued_total }}</td></tr>
-        <tr><td class="label">Перерасчёт:</td><td class="amount">{{ charge.recalculation_total }}</td></tr>
-        <tr><td class="label">Оплачено:</td><td class="amount">{{ charge.paid_total }}</td></tr>
-        <tr class="total-row"><td class="label">Исходящее сальдо (к оплате):</td><td class="amount">{{ charge.closing_balance }}</td></tr>
+        <tr><td class="label">Входящее сальдо:</td><td class="amount">{{ charge.opening_balance|floatformat:2 }}</td></tr>
+        <tr><td class="label">Начислено:</td><td class="amount">{{ charge.accrued_total|floatformat:2 }}</td></tr>
+        <tr><td class="label">Перерасчёт:</td><td class="amount">{{ charge.recalculation_total|floatformat:2 }}</td></tr>
+        <tr><td class="label">Оплачено:</td><td class="amount">{{ charge.paid_total|floatformat:2 }}</td></tr>
+        <tr class="total-row"><td class="label">Исходящее сальдо (к оплате):</td><td class="amount">{{ charge.closing_balance|floatformat:2 }}</td></tr>
     </table>
 </body>
 </html>

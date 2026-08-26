@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}ЛС №{{ account.number }}{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <h1>Лицевой счёт №{{ account.number }}
+        {% if account.status == "active" %}<span class="badge badge-success">Открыт</span>
+        {% else %}<span class="badge badge-muted">Закрыт</span>{% endif %}
+    </h1>
+    <a class="btn btn-secondary" href="{% url 'accounts:update' account.pk %}">Редактировать</a>
+</div>
+
+<div class="card">
+    <h3>Помещение</h3>
+    <p>{{ account.unit.house }}, кв./пом. {{ account.unit.number }}
+        (<a href="{% url 'addresses:house_detail' account.unit.house_id %}">карточка дома</a>)</p>
+    <p class="muted">
+        S общая: {{ account.unit.area_total }} м² ·
+        S жилая: {{ account.unit.area_living }} м² ·
+        S нежилая: {{ account.unit.area_non_living }} м² ·
+        S балкона: {{ account.unit.area_balcony }} м² (коэфф. {{ account.unit.balcony_coefficient }}) ·
+        Расчётная площадь: {{ account.unit.billable_area }} м²
+    </p>
+    <p>Прописано лиц: {{ account.registered_count }} · Открыт: {{ account.opened_at }}
+        {% if account.closed_at %}· Закрыт: {{ account.closed_at }}{% endif %}</p>
+    {% if account.notes %}<p class="muted">{{ account.notes }}</p>{% endif %}
+</div>
+
+<div class="card">
+    <div class="toolbar"><h3>Наниматели</h3>
+        <a class="btn btn-sm btn-secondary" href="{% url 'tenants:assign' account.pk %}">Назначить нанимателя</a>
+    </div>
+    <table>
+        <thead><tr><th>ФИО</th><th>Основной</th><th>С</th><th>По</th><th>Основание</th></tr></thead>
+        <tbody>
+        {% for a in tenant_assignments %}
+            <tr>
+                <td><a href="{% url 'tenants:detail' a.tenant_id %}">{{ a.tenant.full_name }}</a></td>
+                <td>{% if a.is_primary %}да{% endif %}</td>
+                <td>{{ a.start_date }}</td>
+                <td>{{ a.end_date|default:"—" }}</td>
+                <td class="muted">{{ a.reason }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="muted">Наниматели не назначены.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <div class="toolbar"><h3>Договоры</h3>
+        <a class="btn btn-sm btn-secondary" href="{% url 'contracts:create' %}?account={{ account.pk }}">Добавить договор</a>
+    </div>
+    <table>
+        <thead><tr><th>Номер</th><th>Заключён</th><th>Окончание</th><th></th></tr></thead>
+        <tbody>
+        {% for c in contracts %}
+            <tr>
+                <td>{{ c.number }}</td>
+                <td>{{ c.signed_date }}</td>
+                <td>{{ c.end_date|default:"бессрочно" }}</td>
+                <td><a href="{% url 'contracts:update' c.pk %}">изменить</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" class="muted">Договоров нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <div class="toolbar"><h3>Приборы учёта</h3>
+        <a class="btn btn-sm btn-secondary" href="{% url 'meters:meter_create' account.pk %}">Добавить прибор</a>
+    </div>
+    <table>
+        <thead><tr><th>Услуга</th><th>№ прибора</th><th>Последнее показание</th><th></th></tr></thead>
+        <tbody>
+        {% for m in meters %}
+            <tr>
+                <td>{{ m.service.name }}</td>
+                <td>{{ m.serial_number }}</td>
+                <td>
+                    {% with lr=m.last_reading %}
+                        {% if lr %}{{ lr.value }} ({{ lr.period|date:"m.Y" }}){% else %}—{% endif %}
+                    {% endwith %}
+                </td>
+                <td><a href="{% url 'meters:reading_create' m.pk %}">внести показание</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" class="muted">Приборов учёта нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <div class="toolbar"><h3>Начисления</h3></div>
+    <form method="post" action="{% url 'accounts:generate_charge' account.pk %}" class="actions-row">
+        {% csrf_token %}
+        <input type="month" name="period" required value="{% now 'Y-m' %}">
+        <button class="btn btn-sm" type="submit">Сформировать начисление за период</button>
+    </form>
+    <table>
+        <thead><tr><th>Период</th><th>Вход. сальдо</th><th>Начислено</th><th>Перерасчёт</th><th>Оплачено</th><th>Исх. сальдо</th><th>Квитанция</th></tr></thead>
+        <tbody>
+        {% for charge in charges %}
+            <tr>
+                <td>{{ charge.period|date:"m.Y" }}</td>
+                <td class="mono">{{ charge.opening_balance|floatformat:2 }}</td>
+                <td class="mono">{{ charge.accrued_total|floatformat:2 }}</td>
+                <td class="mono">{{ charge.recalculation_total|floatformat:2 }}</td>
+                <td class="mono">{{ charge.paid_total|floatformat:2 }}</td>
+                <td class="mono">{{ charge.closing_balance|floatformat:2 }}</td>
+                <td>
+                    {% if charge.receipt %}
+                        <a href="{{ charge.receipt.file.url }}">скачать PDF</a>
+                    {% else %}
+                        <form method="post" action="{% url 'receipts:generate_for_charge' charge.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-secondary" type="submit">сформировать</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="7" class="muted">Начислений пока нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <div class="toolbar"><h3>Перерасчёты</h3>
+        <a class="btn btn-sm btn-secondary" href="{% url 'billing:recalculation_create' account.pk %}">Добавить перерасчёт</a>
+    </div>
+    <table>
+        <thead><tr><th>Услуга</th><th>Период</th><th>Сумма</th><th>Причина</th><th>Кем</th></tr></thead>
+        <tbody>
+        {% for r in recalculations %}
+            <tr>
+                <td>{{ r.service.name }}</td>
+                <td>{{ r.period|date:"m.Y" }}</td>
+                <td class="mono">{{ r.amount|floatformat:2 }}</td>
+                <td>{{ r.get_reason_display }}</td>
+                <td class="muted">{{ r.created_by }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="muted">Перерасчётов нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <div class="toolbar"><h3>Оплаты</h3>
+        <a class="btn btn-sm btn-secondary" href="{% url 'billing:payment_create' account.pk %}">Добавить оплату</a>
+    </div>
+    <table>
+        <thead><tr><th>Дата</th><th>Сумма</th><th>Номер платежа</th></tr></thead>
+        <tbody>
+        {% for p in payments %}
+            <tr><td>{{ p.date }}</td><td class="mono">{{ p.amount|floatformat:2 }}</td><td>{{ p.reference }}</td></tr>
+        {% empty %}
+            <tr><td colspan="3" class="muted">Оплат нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if penalty_accruals %}
+<div class="card">
+    <h3>Начисленная пеня</h3>
+    <table>
+        <thead><tr><th>Дата расчёта</th><th>Дней просрочки</th><th>Сумма долга</th><th>Пеня</th></tr></thead>
+        <tbody>
+        {% for pa in penalty_accruals %}
+            <tr><td>{{ pa.calculation_date }}</td><td>{{ pa.days_overdue }}</td><td class="mono">{{ pa.debt_amount|floatformat:2 }}</td><td class="mono">{{ pa.amount|floatformat:2 }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

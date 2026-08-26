@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {{ field.errors }}
+        </div>
+        {% endfor %}
+        <button class="btn" type="submit">Сохранить</button>
+    </form>
+    <p class="muted" style="margin-top:12px;">
+        Нет нужной улицы в списке? <a href="{% url 'addresses:street_create' %}">Добавить улицу</a>.
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Начисления{% endblock %}
+{% block content %}
+<h1>Начисления</h1>
+
+<div class="card">
+    <h3>Сформировать начисления за период по всем активным лицевым счетам</h3>
+    <form method="post" class="actions-row">
+        {% csrf_token %}
+        {{ generate_form.period }}
+        <button class="btn" type="submit">Сформировать</button>
+    </form>
+</div>
+
+<form class="search-bar" method="get">
+    <input type="month" name="period" value="{{ period }}">
+    <button class="btn btn-secondary" type="submit">Показать</button>
+</form>
+
+<div class="card">
+    <table>
+        <thead>
+        <tr><th>Лицевой счёт</th><th>Период</th><th>Начислено</th><th>Перерасчёт</th><th>Оплачено</th><th>Сальдо</th></tr>
+        </thead>
+        <tbody>
+        {% for charge in charges %}
+            <tr>
+                <td><a href="{% url 'accounts:detail' charge.account_id %}">№{{ charge.account.number }}</a></td>
+                <td>{{ charge.period|date:"m.Y" }}</td>
+                <td class="mono">{{ charge.accrued_total|floatformat:2 }}</td>
+                <td class="mono">{{ charge.recalculation_total|floatformat:2 }}</td>
+                <td class="mono">{{ charge.paid_total|floatformat:2 }}</td>
+                <td class="mono">{{ charge.closing_balance|floatformat:2 }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="muted">Начислений не найдено.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

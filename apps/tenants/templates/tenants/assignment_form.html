@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Назначить нанимателя{% endblock %}
+{% block content %}
+<h1>Назначить нанимателя — ЛС №{{ account.number }}</h1>
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="field {% if field.name == 'is_primary' %}checkbox-field{% endif %}">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {{ field.errors }}
+        </div>
+        {% endfor %}
+        <button class="btn" type="submit">Назначить</button>
+        <a class="btn btn-secondary" href="{% url 'accounts:detail' account.pk %}">Отмена</a>
+    </form>
+    <p class="muted" style="margin-top:12px;">
+        Нужного нанимателя нет в списке? <a href="{% url 'tenants:create' %}">Добавить нового</a>, затем вернитесь на эту страницу.
+    </p>
+</div>
+{% endblock %}

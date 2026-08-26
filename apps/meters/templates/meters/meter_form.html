@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Новый прибор учёта — ЛС №{{ account.number }}{% endblock %}
+{% block content %}
+<h1>Новый прибор учёта — ЛС №{{ account.number }}</h1>
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {{ field.errors }}
+        </div>
+        {% endfor %}
+        <button class="btn" type="submit">Сохранить</button>
+        <a class="btn btn-secondary" href="{% url 'accounts:detail' account.pk %}">Отмена</a>
+    </form>
+</div>
+{% endblock %}

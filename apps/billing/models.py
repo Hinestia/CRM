@@ -69,7 +69,7 @@ class Charge(models.Model):
         )
         if save:
             self.save(update_fields=[
-                "accrued_total", "recalculation_total", "closing_balance",
+                "accrued_total", "recalculation_total", "paid_total", "closing_balance",
             ])
 
 

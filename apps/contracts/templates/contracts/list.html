@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Договоры{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <h1>Договоры</h1>
+    <a class="btn" href="{% url 'contracts:create' %}">+ Новый договор</a>
+</div>
+
+<form class="search-bar" method="get">
+    <input type="text" name="q" value="{{ q }}" placeholder="Номер договора, номер ЛС...">
+    <label class="checkbox-field" style="align-items:center;">
+        <input type="checkbox" name="expiring" value="1" {% if expiring_only %}checked{% endif %}> истекают в 30 дней
+    </label>
+    <button class="btn btn-secondary" type="submit">Найти</button>
+</form>
+
+<div class="card">
+    <table>
+        <thead><tr><th>№ договора</th><th>Лицевой счёт</th><th>Заключён</th><th>Окончание</th><th></th></tr></thead>
+        <tbody>
+        {% for c in contracts %}
+            <tr>
+                <td>{{ c.number }}</td>
+                <td><a href="{% url 'accounts:detail' c.account_id %}">№{{ c.account.number }}</a></td>
+                <td>{{ c.signed_date }}</td>
+                <td>{{ c.end_date|default:"бессрочно" }}</td>
+                <td><a href="{% url 'contracts:update' c.pk %}">изменить</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="muted">Договоров не найдено.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

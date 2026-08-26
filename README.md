@@ -81,7 +81,9 @@ docker compose up -d --build
 docker compose exec web python manage.py createsuperuser
 ```
 
-Admin доступен на `http://localhost/admin/`.
+Рабочий интерфейс сотрудника — `http://localhost/` (лицевые счета, начисления,
+квитанции, должники и т.д.). Django admin (`http://localhost/admin/`)
+остаётся доступен отдельно — как резервный доступ к редким справочникам.
 
 ## Разработка без Docker вообще
 

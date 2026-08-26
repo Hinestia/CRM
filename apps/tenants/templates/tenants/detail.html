@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ tenant }}{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <h1>{{ tenant.full_name }}</h1>
+    <a class="btn btn-secondary" href="{% url 'tenants:update' tenant.pk %}">Редактировать</a>
+</div>
+
+<div class="card">
+    <p>Телефон: {{ tenant.phone|default:"—" }} · Email: {{ tenant.email|default:"—" }}</p>
+    <p class="muted">
+        Паспорт: {{ tenant.passport_series }} {{ tenant.passport_number }}
+        {% if tenant.passport_issued_by %}, выдан {{ tenant.passport_issued_by }} {{ tenant.passport_issued_date }}{% endif %}
+    </p>
+</div>
+
+<div class="card">
+    <h3>Лицевые счета</h3>
+    <table>
+        <thead><tr><th>ЛС</th><th>Адрес</th><th>Основной</th><th>С</th><th>По</th><th></th></tr></thead>
+        <tbody>
+        {% for a in assignments %}
+            <tr>
+                <td><a href="{% url 'accounts:detail' a.account_id %}">№{{ a.account.number }}</a></td>
+                <td>{{ a.account.unit.house }}, пом. {{ a.account.unit.number }}</td>
+                <td>{% if a.is_primary %}да{% endif %}</td>
+                <td>{{ a.start_date }}</td>
+                <td>{{ a.end_date|default:"—" }}</td>
+                <td>
+                    {% if not a.end_date %}
+                    <form method="post" action="{% url 'tenants:assignment_end' a.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-secondary" type="submit">Завершить</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="muted">Не назначен ни на один лицевой счёт.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

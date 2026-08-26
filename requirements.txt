@@ -1,0 +1,8 @@
+Django>=5.2,<5.3
+psycopg2-binary>=2.9
+gunicorn>=22.0
+
+celery>=5.4
+redis>=5.0
+
+weasyprint>=62.0

@@ -144,6 +144,19 @@ h3 {
     margin-bottom: 18px;
 }
 
+/* Сетка карточек: несколько блоков в ряд вместо растягивания на всю
+   ширину — колонки сами подстраиваются под ширину экрана (auto-fit),
+   на узких экранах схлопываются в один столбец. */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 18px;
+    align-items: start;
+    margin-bottom: 18px;
+}
+.card-grid .card { margin-bottom: 0; min-width: 0; }
+.card-grid .card--wide { grid-column: 1 / -1; }
+
 .toolbar {
     display: flex;
     justify-content: space-between;
@@ -197,6 +210,11 @@ table th {
 }
 table tbody tr:last-child td { border-bottom: none; }
 table tbody tr:hover td { background: var(--color-primary-light); }
+
+/* Таблица шире узкой колонки card-grid — скроллится сама, а не ломает
+   границы карточки/сетки. */
+.table-scroll { overflow-x: auto; }
+.table-scroll table { min-width: 480px; }
 
 /* ---------- Бейджи ---------- */
 

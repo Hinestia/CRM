@@ -20,17 +20,18 @@
         S балкона: {{ account.unit.area_balcony }} м² (коэфф. {{ account.unit.balcony_coefficient }}) ·
         Расчётная площадь: {{ account.unit.billable_area }} м²
     </p>
-    <p>Прописано лиц: {{ account.registered_count }} · Открыт: {{ account.opened_at }}
+    <p>Прописано лиц: <strong>{{ account.registered_count }}</strong> (считается по списку ниже) ·
+        Открыт: {{ account.opened_at }}
         {% if account.closed_at %}· Закрыт: {{ account.closed_at }}{% endif %}</p>
     {% if account.notes %}<p class="muted">{{ account.notes }}</p>{% endif %}
 </div>
 
 <div class="card">
-    <div class="toolbar"><h3>Наниматели</h3>
-        <a class="btn btn-sm btn-secondary" href="{% url 'tenants:assign' account.pk %}">Назначить нанимателя</a>
+    <div class="toolbar"><h3>Наниматели и прописанные лица</h3>
+        <a class="btn btn-sm" href="{% url 'tenants:resident_create' account.pk %}">+ Добавить человека</a>
     </div>
     <table>
-        <thead><tr><th>ФИО</th><th>Основной</th><th>С</th><th>По</th><th>Основание</th></tr></thead>
+        <thead><tr><th>ФИО</th><th>Основной</th><th>С</th><th>По</th><th>Основание</th><th></th></tr></thead>
         <tbody>
         {% for a in tenant_assignments %}
             <tr>
@@ -39,9 +40,17 @@
                 <td>{{ a.start_date }}</td>
                 <td>{{ a.end_date|default:"—" }}</td>
                 <td class="muted">{{ a.reason }}</td>
+                <td>
+                    {% if not a.end_date %}
+                    <form method="post" action="{% url 'tenants:assignment_end' a.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-secondary" type="submit">выписать</button>
+                    </form>
+                    {% endif %}
+                </td>
             </tr>
         {% empty %}
-            <tr><td colspan="5" class="muted">Наниматели не назначены.</td></tr>
+            <tr><td colspan="6" class="muted">Никто не прописан.</td></tr>
         {% endfor %}
         </tbody>
     </table>

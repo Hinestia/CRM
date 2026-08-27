@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.accounts.models import PersonalAccount
 
-from .forms import TenantAccountAssignmentForm, TenantForm
+from .forms import AssignmentDetailsForm, TenantAccountAssignmentForm, TenantForm
 from .models import Tenant, TenantAccountAssignment
 
 
@@ -60,7 +60,36 @@ def tenant_update(request, pk):
 
 
 @login_required
+def resident_create(request, account_pk):
+    """Основной сценарий паспортного стола: сразу завести нового человека
+    (с паспортными данными) и прописать его на этот лицевой счёт — одной
+    формой, без промежуточного шага "сначала создай нанимателя отдельно"."""
+    account = get_object_or_404(PersonalAccount, pk=account_pk)
+    if request.method == "POST":
+        tenant_form = TenantForm(request.POST)
+        assignment_form = AssignmentDetailsForm(request.POST)
+        if tenant_form.is_valid() and assignment_form.is_valid():
+            tenant = tenant_form.save()
+            assignment = assignment_form.save(commit=False)
+            assignment.account = account
+            assignment.tenant = tenant
+            assignment.save()
+            messages.success(
+                request, f"{tenant.full_name} добавлен(а) и прописан(а) на ЛС №{account.number}."
+            )
+            return redirect("accounts:detail", pk=account.pk)
+    else:
+        tenant_form = TenantForm()
+        assignment_form = AssignmentDetailsForm(initial={"start_date": date.today()})
+    return render(request, "tenants/resident_form.html", {
+        "tenant_form": tenant_form, "assignment_form": assignment_form, "account": account,
+    })
+
+
+@login_required
 def assignment_create(request, account_pk):
+    """Прописать на ЛС человека, который уже заведён в системе ранее
+    (например, переезжает с другого лицевого счёта)."""
     account = get_object_or_404(PersonalAccount, pk=account_pk)
     if request.method == "POST":
         form = TenantAccountAssignmentForm(request.POST)

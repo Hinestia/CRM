@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Назначить нанимателя{% endblock %}
+{% block title %}Прописать существующего{% endblock %}
 {% block content %}
-<h1>Назначить нанимателя — ЛС №{{ account.number }}</h1>
+<h1>Прописать на ЛС №{{ account.number }} уже существующего человека</h1>
 <div class="card">
     <form method="post">
         {% csrf_token %}
@@ -12,11 +12,13 @@
             {{ field.errors }}
         </div>
         {% endfor %}
-        <button class="btn" type="submit">Назначить</button>
+        <button class="btn" type="submit">Прописать</button>
         <a class="btn btn-secondary" href="{% url 'accounts:detail' account.pk %}">Отмена</a>
     </form>
     <p class="muted" style="margin-top:12px;">
-        Нужного нанимателя нет в списке? <a href="{% url 'tenants:create' %}">Добавить нового</a>, затем вернитесь на эту страницу.
+        Человека ещё нет в системе? На карточке лицевого счёта используйте
+        кнопку «Добавить человека» — она заведёт нового человека и сразу
+        пропишет его на этот ЛС одной формой.
     </p>
 </div>
 {% endblock %}

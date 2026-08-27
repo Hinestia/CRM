@@ -9,6 +9,7 @@ urlpatterns = [
     path("new/", views.tenant_create, name="create"),
     path("<int:pk>/", views.tenant_detail, name="detail"),
     path("<int:pk>/edit/", views.tenant_update, name="update"),
+    path("resident/<int:account_pk>/new/", views.resident_create, name="resident_create"),
     path("assign/<int:account_pk>/", views.assignment_create, name="assign"),
     path("assignment/<int:pk>/end/", views.assignment_end, name="assignment_end"),
 ]

@@ -23,10 +23,6 @@ class PersonalAccount(models.Model):
     status = models.CharField(
         "Статус", max_length=10, choices=AccountStatus.choices, default=AccountStatus.ACTIVE
     )
-    registered_count = models.PositiveSmallIntegerField(
-        "Кол-во зарегистрированных лиц", default=0,
-        help_text="Используется для начислений по тарифу «руб/чел»",
-    )
     opened_at = models.DateField("Дата открытия")
     closed_at = models.DateField("Дата закрытия", null=True, blank=True)
     notes = models.TextField("Примечания", blank=True)
@@ -53,3 +49,11 @@ class PersonalAccount(models.Model):
             .first()
         )
         return assignment.tenant if assignment else None
+
+    @property
+    def registered_count(self) -> int:
+        """Кол-во зарегистрированных лиц — считается по факту внесённых людей
+        (действующих назначений в tenant_assignments, у каждого — свои
+        паспортные данные), а не вводится вручную. Используется для
+        начислений по тарифу «руб/чел» (см. apps.billing.services)."""
+        return self.tenant_assignments.filter(end_date__isnull=True).count()

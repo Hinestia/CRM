@@ -6,8 +6,10 @@ from .models import PersonalAccount
 class PersonalAccountForm(forms.ModelForm):
     class Meta:
         model = PersonalAccount
+        # registered_count не редактируется — считается автоматически по
+        # числу действующих назначений в tenant_assignments (см. модель).
         fields = [
-            "number", "unit", "status", "registered_count",
+            "number", "unit", "status",
             "opened_at", "closed_at", "notes",
         ]
         widgets = {

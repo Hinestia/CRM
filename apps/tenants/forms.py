@@ -16,9 +16,27 @@ class TenantForm(forms.ModelForm):
 
 
 class TenantAccountAssignmentForm(forms.ModelForm):
+    """Прописать на лицевой счёт уже существующего человека (выбор из списка)."""
+
     class Meta:
         model = TenantAccountAssignment
         fields = ["tenant", "is_primary", "start_date", "reason"]
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        }
+
+
+class AssignmentDetailsForm(forms.ModelForm):
+    """Та же форма назначения, но без выбора нанимателя — используется вместе
+    с TenantForm, когда человека сразу и заводят, и прописывают на ЛС."""
+
+    is_primary = forms.BooleanField(
+        label="Ответственный наниматель (основной плательщик)", required=False, initial=True,
+    )
+
+    class Meta:
+        model = TenantAccountAssignment
+        fields = ["is_primary", "start_date", "reason"]
         widgets = {
             "start_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
         }

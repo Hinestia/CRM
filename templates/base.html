@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}CRM ЖКУ{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/site.css' %}">
+    <script src="{% static 'js/htmx.min.js' %}" defer></script>
 </head>
 <body>
     <div class="navbar">
@@ -19,6 +20,7 @@
             <a href="{% url 'billing:charge_list' %}">Начисления</a>
             <a href="{% url 'receipts:list' %}">Квитанции</a>
             <a href="{% url 'debts:list' %}">Должники</a>
+            <a href="{% url 'reports:index' %}">Отчёты</a>
         </nav>
         <div class="user">
             <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
@@ -43,5 +45,15 @@
 
         {% block content %}{% endblock %}
     </div>
+
+    <div id="modal-root"></div>
+    <script>
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                var root = document.getElementById("modal-root");
+                if (root) root.innerHTML = "";
+            }
+        });
+    </script>
 </body>
 </html>

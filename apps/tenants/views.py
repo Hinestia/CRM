@@ -4,8 +4,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from apps.accounts.models import PersonalAccount
+from config.htmx_utils import htmx_redirect
 
 from .forms import AssignmentDetailsForm, TenantAccountAssignmentForm, TenantForm
 from .models import Tenant, TenantAccountAssignment
@@ -62,8 +64,8 @@ def tenant_update(request, pk):
 @login_required
 def resident_create(request, account_pk):
     """Основной сценарий паспортного стола: сразу завести нового человека
-    (с паспортными данными) и прописать его на этот лицевой счёт — одной
-    формой, без промежуточного шага "сначала создай нанимателя отдельно"."""
+    (с паспортными данными) и прописать его на этот лицевой счёт — модальным
+    окном поверх карточки ЛС, без ухода на отдельную страницу."""
     account = get_object_or_404(PersonalAccount, pk=account_pk)
     if request.method == "POST":
         tenant_form = TenantForm(request.POST)
@@ -77,11 +79,11 @@ def resident_create(request, account_pk):
             messages.success(
                 request, f"{tenant.full_name} добавлен(а) и прописан(а) на ЛС №{account.number}."
             )
-            return redirect("accounts:detail", pk=account.pk)
+            return htmx_redirect(reverse("accounts:detail", args=[account.pk]))
     else:
         tenant_form = TenantForm()
         assignment_form = AssignmentDetailsForm(initial={"start_date": date.today()})
-    return render(request, "tenants/resident_form.html", {
+    return render(request, "tenants/_resident_modal.html", {
         "tenant_form": tenant_form, "assignment_form": assignment_form, "account": account,
     })
 
@@ -89,7 +91,7 @@ def resident_create(request, account_pk):
 @login_required
 def assignment_create(request, account_pk):
     """Прописать на ЛС человека, который уже заведён в системе ранее
-    (например, переезжает с другого лицевого счёта)."""
+    (например, переезжает с другого лицевого счёта) — тоже модалкой."""
     account = get_object_or_404(PersonalAccount, pk=account_pk)
     if request.method == "POST":
         form = TenantAccountAssignmentForm(request.POST)
@@ -98,10 +100,10 @@ def assignment_create(request, account_pk):
             assignment.account = account
             assignment.save()
             messages.success(request, f"{assignment.tenant} назначен(а) на ЛС №{account.number}.")
-            return redirect("accounts:detail", pk=account.pk)
+            return htmx_redirect(reverse("accounts:detail", args=[account.pk]))
     else:
         form = TenantAccountAssignmentForm(initial={"start_date": date.today()})
-    return render(request, "tenants/assignment_form.html", {
+    return render(request, "tenants/_assignment_modal.html", {
         "form": form, "account": account,
     })
 

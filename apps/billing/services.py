@@ -44,7 +44,7 @@ def generate_charge_for_account(account: PersonalAccount, period: date, services
     previous_charge = Charge.objects.filter(account=account, period=previous_period).first()
     charge.opening_balance = previous_charge.closing_balance if previous_charge else Decimal("0")
 
-    services = services or Service.objects.filter(is_active=True)
+    services = services if services is not None else account.services.filter(is_active=True)
     for service in services:
         tariff = service.tariff_for_date(period)
         if tariff is None:
@@ -55,10 +55,6 @@ def generate_charge_for_account(account: PersonalAccount, period: date, services
             charge=charge, service=service,
             defaults={"tariff": tariff, "rate": tariff.rate, "volume": volume, "amount": amount},
         )
-
-    # Перерасчёты, ещё не привязанные ни к одному начислению, попадают в текущее
-    charge.recalculations.filter(applied_in_charge__isnull=True).update(applied_in_charge=charge)
-    account.recalculations.filter(applied_in_charge__isnull=True).update(applied_in_charge=charge)
 
     charge.recalculate_totals(save=False)
     charge.save()

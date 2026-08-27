@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Charge, ChargeLine, Payment, Recalculation
+from .models import Charge, ChargeLine, Payment
 
 
 class ChargeLineInline(admin.TabularInline):
@@ -12,19 +12,12 @@ class ChargeLineInline(admin.TabularInline):
 class ChargeAdmin(admin.ModelAdmin):
     list_display = (
         "account", "period", "status", "opening_balance", "accrued_total",
-        "recalculation_total", "paid_total", "closing_balance",
+        "paid_total", "closing_balance",
     )
     list_filter = ("status", "period")
     search_fields = ("account__number",)
     inlines = [ChargeLineInline]
-    readonly_fields = ("accrued_total", "recalculation_total", "closing_balance")
-
-
-@admin.register(Recalculation)
-class RecalculationAdmin(admin.ModelAdmin):
-    list_display = ("account", "service", "period", "amount", "reason", "created_by", "applied_in_charge")
-    list_filter = ("reason", "service")
-    search_fields = ("account__number",)
+    readonly_fields = ("accrued_total", "closing_balance")
 
 
 @admin.register(Payment)

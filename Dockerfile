@@ -5,7 +5,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Системные зависимости: libpq для psycopg2, остальное — для WeasyPrint (рендер PDF)
+# Системные зависимости: libpq для psycopg2, часть — для WeasyPrint (рендер
+# квитанций/отчётов в PDF), libreoffice-writer — для конвертации договора
+# (docxtpl рендерит .docx из шаблона, LibreOffice headless конвертирует в PDF)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     libpango-1.0-0 \
@@ -15,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     shared-mime-info \
     fonts-dejavu-core \
+    libreoffice-writer \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

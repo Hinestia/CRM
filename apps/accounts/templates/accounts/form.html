@@ -9,6 +9,12 @@
         <div class="field">
             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
+            {% if field.name == "unit" %}
+            <button type="button" class="btn btn-sm btn-secondary" style="margin-top:6px;"
+                    hx-get="{% url 'addresses:unit_quick_create' %}" hx-target="#modal-root" hx-swap="innerHTML">
+                + Новое помещение
+            </button>
+            {% endif %}
             {% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}
             {{ field.errors }}
         </div>

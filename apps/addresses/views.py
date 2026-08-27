@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import HouseForm, StreetForm, UnitForm
+from .forms import HouseForm, StreetForm, UnitForm, UnitWithHouseForm
 from .models import House, Unit
 
 
@@ -67,6 +67,53 @@ def unit_create(request, house_pk):
     return render(request, "addresses/unit_form.html", {
         "form": form, "title": f"Новое помещение — {house}", "house": house,
     })
+
+
+@login_required
+def street_quick_create(request):
+    """Модалка «Новая улица», открытая из модалки «Новое помещение» на
+    карточке ЛС. Возвращает пользователя обратно в модалку помещения —
+    с только что созданной улицей предвыбранной."""
+    if request.method == "POST":
+        form = StreetForm(request.POST)
+        if form.is_valid():
+            street = form.save()
+            messages.success(request, f"Улица «{street}» добавлена.")
+            unit_form = UnitWithHouseForm(initial={"street": street.pk})
+            return render(request, "addresses/_unit_quick_create_modal.html", {"form": unit_form})
+    else:
+        form = StreetForm()
+    return render(request, "addresses/_street_quick_create_modal.html", {"form": form})
+
+
+@login_required
+def unit_quick_create(request):
+    """Модалка «Новое помещение» на карточке лицевого счёта: заводит дом
+    (если такого ещё нет) и помещение в нём, затем через out-of-band swap
+    подставляет новое помещение в выпадающий список на форме ЛС."""
+    if request.method == "POST":
+        form = UnitWithHouseForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            house, _ = House.objects.get_or_create(
+                street=cd["street"], number=cd["house_number"], building=cd["building"],
+            )
+            if Unit.objects.filter(house=house, number=cd["unit_number"]).exists():
+                form.add_error("unit_number", "Такое помещение уже есть в этом доме.")
+            else:
+                unit = Unit.objects.create(
+                    house=house, number=cd["unit_number"], type=cd["unit_type"],
+                    area_living=cd["area_living"], area_non_living=cd["area_non_living"],
+                    area_balcony=cd["area_balcony"], balcony_coefficient=cd["balcony_coefficient"],
+                )
+                messages.success(request, f"Помещение «{unit}» добавлено.")
+                return render(request, "addresses/_unit_oob_swap.html", {
+                    "units": Unit.objects.select_related("house__street"),
+                    "selected_unit": unit,
+                })
+    else:
+        form = UnitWithHouseForm()
+    return render(request, "addresses/_unit_quick_create_modal.html", {"form": form})
 
 
 @login_required

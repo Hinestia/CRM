@@ -33,9 +33,6 @@ class Charge(models.Model):
     accrued_total = models.DecimalField(
         "Начислено", max_digits=12, decimal_places=2, default=Decimal("0")
     )
-    recalculation_total = models.DecimalField(
-        "Перерасчёт", max_digits=12, decimal_places=2, default=Decimal("0")
-    )
     paid_total = models.DecimalField(
         "Оплачено", max_digits=12, decimal_places=2, default=Decimal("0")
     )
@@ -61,16 +58,9 @@ class Charge(models.Model):
 
     def recalculate_totals(self, save=True):
         self.accrued_total = self.lines.aggregate(total=models.Sum("amount"))["total"] or Decimal("0")
-        self.recalculation_total = (
-            self.recalculations.aggregate(total=models.Sum("amount"))["total"] or Decimal("0")
-        )
-        self.closing_balance = (
-            self.opening_balance + self.accrued_total + self.recalculation_total - self.paid_total
-        )
+        self.closing_balance = self.opening_balance + self.accrued_total - self.paid_total
         if save:
-            self.save(update_fields=[
-                "accrued_total", "recalculation_total", "paid_total", "closing_balance",
-            ])
+            self.save(update_fields=["accrued_total", "paid_total", "closing_balance"])
 
 
 class ChargeLine(models.Model):
@@ -103,60 +93,6 @@ class ChargeLine(models.Model):
 
     def __str__(self):
         return f"{self.service}: {self.amount} ({self.charge})"
-
-
-class RecalculationReason(models.TextChoices):
-    TEMPORARY_ABSENCE = "temporary_absence", "Временное отсутствие"
-    POOR_QUALITY = "poor_quality", "Некачественная услуга"
-    TARIFF_CHANGE = "tariff_change", "Изменение тарифа задним числом"
-    METER_CORRECTION = "meter_correction", "Корректировка показаний"
-    MANUAL = "manual", "Ручная корректировка"
-    OTHER = "other", "Прочее"
-
-
-class Recalculation(models.Model):
-    """Перерасчёт по конкретной услуге за прошедший период.
-
-    Перерасчёт создаётся вручную (или полуавтоматически, например при вводе
-    заявления о временном отсутствии) и попадает в ближайшее ещё не
-    проведённое начисление (applied_in_charge) отдельной суммой — сами
-    начисления за прошлые периоды не переписываются, что сохраняет
-    аудируемую историю.
-    """
-
-    account = models.ForeignKey(
-        PersonalAccount, on_delete=models.CASCADE, related_name="recalculations",
-        verbose_name="Лицевой счёт",
-    )
-    service = models.ForeignKey(
-        Service, on_delete=models.PROTECT, related_name="recalculations", verbose_name="Услуга"
-    )
-    period = models.DateField("За какой период пересчитывается")
-    amount = models.DecimalField(
-        "Сумма корректировки", max_digits=12, decimal_places=2,
-        help_text="Положительная — доначисление, отрицательная — уменьшение",
-    )
-    reason = models.CharField("Причина", max_length=20, choices=RecalculationReason.choices)
-    comment = models.TextField("Комментарий", blank=True)
-
-    applied_in_charge = models.ForeignKey(
-        Charge, on_delete=models.SET_NULL, related_name="recalculations", null=True, blank=True,
-        verbose_name="Учтено в начислении",
-    )
-
-    created_by = models.ForeignKey(
-        "users.User", on_delete=models.PROTECT, related_name="+", verbose_name="Кем создан"
-    )
-    created_at = models.DateTimeField("Создан", auto_now_add=True)
-
-    class Meta:
-        verbose_name = "Перерасчёт"
-        verbose_name_plural = "Перерасчёты"
-        ordering = ("-created_at",)
-        indexes = [models.Index(fields=["account", "period"])]
-
-    def __str__(self):
-        return f"Перерасчёт {self.service} за {self.period:%m.%Y}: {self.amount}"
 
 
 class Payment(models.Model):

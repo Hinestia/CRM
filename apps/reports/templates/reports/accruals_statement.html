@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Ведомость начислений за {{ period|date:"m.Y" }}</title>
+<style>
+    @page { size: A4 landscape; margin: 12mm; }
+    body { font-family: "DejaVu Sans", sans-serif; font-size: 10px; color: #222; }
+    h1 { font-size: 15px; margin-bottom: 2px; }
+    .subtitle { color: #555; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #999; padding: 3px 5px; text-align: left; }
+    th { background: #eee; }
+    .amount { text-align: right; white-space: nowrap; }
+    .total-row td { font-weight: bold; border-top: 2px solid #222; }
+</style>
+</head>
+<body>
+    <h1>Ведомость начислений</h1>
+    <div class="subtitle">Период: {{ period|date:"F Y" }} · всего начислений: {{ charges|length }}</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>№ ЛС</th>
+                <th>Адрес</th>
+                <th class="amount">Вход. сальдо</th>
+                <th class="amount">Начислено</th>
+                <th class="amount">Оплачено</th>
+                <th class="amount">Исх. сальдо</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for charge in charges %}
+            <tr>
+                <td>{{ charge.account.number }}</td>
+                <td>{{ charge.account.unit.house }}, кв./пом. {{ charge.account.unit.number }}</td>
+                <td class="amount">{{ charge.opening_balance|floatformat:2 }}</td>
+                <td class="amount">{{ charge.accrued_total|floatformat:2 }}</td>
+                <td class="amount">{{ charge.paid_total|floatformat:2 }}</td>
+                <td class="amount">{{ charge.closing_balance|floatformat:2 }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6">Начислений за период нет.</td></tr>
+        {% endfor %}
+        </tbody>
+        {% if charges %}
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="2">Итого</td>
+                <td class="amount">{{ totals.opening|floatformat:2 }}</td>
+                <td class="amount">{{ totals.accrued|floatformat:2 }}</td>
+                <td class="amount">{{ totals.paid|floatformat:2 }}</td>
+                <td class="amount">{{ totals.closing|floatformat:2 }}</td>
+            </tr>
+        </tfoot>
+        {% endif %}
+    </table>
+</body>
+</html>

@@ -1,16 +1,6 @@
 from django import forms
 
-from .models import Payment, Recalculation
-
-
-class RecalculationForm(forms.ModelForm):
-    class Meta:
-        model = Recalculation
-        fields = ["service", "period", "amount", "reason", "comment"]
-        widgets = {
-            "period": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
-            "comment": forms.Textarea(attrs={"rows": 3}),
-        }
+from .models import Payment
 
 
 class PaymentForm(forms.ModelForm):

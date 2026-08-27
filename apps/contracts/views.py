@@ -4,11 +4,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+
+from django.urls import reverse
 
 from apps.accounts.models import PersonalAccount
+from config.htmx_utils import htmx_redirect
 
-from .forms import ContractForm
+from .forms import ContractForm, ContractQuickForm
 from .models import Contract
+from .services import NoActiveContractTemplate, generate_contract_pdf
 
 
 @login_required
@@ -51,16 +56,57 @@ def contract_create(request):
 
 
 @login_required
+def contract_create_for_account(request, account_pk):
+    """Добавить договор прямо с карточки лицевого счёта — модальным окном,
+    без выбора ЛС (он уже известен из URL)."""
+    account = get_object_or_404(PersonalAccount, pk=account_pk)
+    if request.method == "POST":
+        form = ContractQuickForm(request.POST)
+        if form.is_valid():
+            contract = form.save(commit=False)
+            contract.account = account
+            contract.save()
+            form.save_m2m()
+            messages.success(request, f"Договор №{contract.number} добавлен.")
+            return htmx_redirect(reverse("accounts:detail", args=[account.pk]))
+    else:
+        form = ContractQuickForm()
+    return render(request, "contracts/_contract_modal.html", {
+        "form": form, "account": account, "title": "Новый договор",
+        "post_url": reverse("contracts:create_for_account", args=[account.pk]),
+    })
+
+
+@login_required
 def contract_update(request, pk):
     contract = get_object_or_404(Contract, pk=pk)
     if request.method == "POST":
-        form = ContractForm(request.POST, instance=contract)
+        form = ContractQuickForm(request.POST, instance=contract)
         if form.is_valid():
             form.save()
             messages.success(request, "Договор обновлён.")
-            return redirect("accounts:detail", pk=contract.account_id)
+            return htmx_redirect(reverse("accounts:detail", args=[contract.account_id]))
     else:
-        form = ContractForm(instance=contract)
-    return render(request, "contracts/form.html", {
-        "form": form, "title": f"Договор №{contract.number}", "account": contract.account,
+        form = ContractQuickForm(instance=contract)
+    return render(request, "contracts/_contract_modal.html", {
+        "form": form, "account": contract.account, "title": f"Договор №{contract.number}",
+        "post_url": reverse("contracts:update", args=[contract.pk]),
     })
+
+
+@login_required
+@require_POST
+def contract_generate_pdf(request, pk):
+    contract = get_object_or_404(Contract, pk=pk)
+    try:
+        generate_contract_pdf(contract, user=request.user)
+        messages.success(request, f"Печатная форма договора №{contract.number} сформирована.")
+    except NoActiveContractTemplate:
+        messages.error(
+            request,
+            "Нет активного шаблона договора — загрузите его в админке "
+            "(Договоры → Шаблоны договора).",
+        )
+    except RuntimeError as exc:
+        messages.error(request, str(exc))
+    return redirect("accounts:detail", pk=contract.account_id)

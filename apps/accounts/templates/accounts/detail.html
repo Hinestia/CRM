@@ -6,6 +6,7 @@
         {% if account.status == "active" %}<span class="badge badge-success">Открыт</span>
         {% else %}<span class="badge badge-muted">Закрыт</span>{% endif %}
     </h1>
+    <a class="btn btn-secondary" href="{% url 'reports:reconciliation_act' %}?account={{ account.pk }}" target="_blank">Акт сверки (PDF)</a>
     <a class="btn btn-secondary" href="{% url 'accounts:update' account.pk %}">Редактировать</a>
 </div>
 
@@ -23,12 +24,17 @@
     <p>Прописано лиц: <strong>{{ account.registered_count }}</strong> (считается по списку ниже) ·
         Открыт: {{ account.opened_at }}
         {% if account.closed_at %}· Закрыт: {{ account.closed_at }}{% endif %}</p>
+    <p class="muted">
+        Услуги на этом ЛС:
+        {% for s in account.services.all %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% empty %}не выбраны — начисления не сформируются{% endfor %}
+        (<a href="{% url 'accounts:update' account.pk %}">изменить</a>)
+    </p>
     {% if account.notes %}<p class="muted">{{ account.notes }}</p>{% endif %}
 </div>
 
 <div class="card">
     <div class="toolbar"><h3>Наниматели и прописанные лица</h3>
-        <a class="btn btn-sm" href="{% url 'tenants:resident_create' account.pk %}">+ Добавить человека</a>
+        <button class="btn btn-sm" hx-get="{% url 'tenants:resident_create' account.pk %}" hx-target="#modal-root" hx-swap="innerHTML">+ Добавить человека</button>
     </div>
     <table>
         <thead><tr><th>ФИО</th><th>Основной</th><th>С</th><th>По</th><th>Основание</th><th></th></tr></thead>
@@ -58,20 +64,31 @@
 
 <div class="card">
     <div class="toolbar"><h3>Договоры</h3>
-        <a class="btn btn-sm btn-secondary" href="{% url 'contracts:create' %}?account={{ account.pk }}">Добавить договор</a>
+        <button class="btn btn-sm btn-secondary" hx-get="{% url 'contracts:create_for_account' account.pk %}" hx-target="#modal-root" hx-swap="innerHTML">Добавить договор</button>
     </div>
     <table>
-        <thead><tr><th>Номер</th><th>Заключён</th><th>Окончание</th><th></th></tr></thead>
+        <thead><tr><th>Номер</th><th>Заключён</th><th>Окончание</th><th colspan="3"></th></tr></thead>
         <tbody>
         {% for c in contracts %}
             <tr>
                 <td>{{ c.number }}</td>
                 <td>{{ c.signed_date }}</td>
                 <td>{{ c.end_date|default:"бессрочно" }}</td>
-                <td><a href="{% url 'contracts:update' c.pk %}">изменить</a></td>
+                <td><a href="#" hx-get="{% url 'contracts:update' c.pk %}" hx-target="#modal-root" hx-swap="innerHTML">изменить</a></td>
+                <td>
+                    <form method="post" action="{% url 'contracts:generate_pdf' c.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-secondary" type="submit">сформировать договор</button>
+                    </form>
+                </td>
+                <td>
+                    {% if c.generated_file %}
+                        <a href="{{ c.generated_file.file.url }}">скачать PDF</a>
+                    {% endif %}
+                </td>
             </tr>
         {% empty %}
-            <tr><td colspan="4" class="muted">Договоров нет.</td></tr>
+            <tr><td colspan="6" class="muted">Договоров нет.</td></tr>
         {% endfor %}
         </tbody>
     </table>
@@ -110,14 +127,13 @@
         <button class="btn btn-sm" type="submit">Сформировать начисление за период</button>
     </form>
     <table>
-        <thead><tr><th>Период</th><th>Вход. сальдо</th><th>Начислено</th><th>Перерасчёт</th><th>Оплачено</th><th>Исх. сальдо</th><th>Квитанция</th></tr></thead>
+        <thead><tr><th>Период</th><th>Вход. сальдо</th><th>Начислено</th><th>Оплачено</th><th>Исх. сальдо</th><th>Квитанция</th></tr></thead>
         <tbody>
         {% for charge in charges %}
             <tr>
                 <td>{{ charge.period|date:"m.Y" }}</td>
                 <td class="mono">{{ charge.opening_balance|floatformat:2 }}</td>
                 <td class="mono">{{ charge.accrued_total|floatformat:2 }}</td>
-                <td class="mono">{{ charge.recalculation_total|floatformat:2 }}</td>
                 <td class="mono">{{ charge.paid_total|floatformat:2 }}</td>
                 <td class="mono">{{ charge.closing_balance|floatformat:2 }}</td>
                 <td>
@@ -132,29 +148,7 @@
                 </td>
             </tr>
         {% empty %}
-            <tr><td colspan="7" class="muted">Начислений пока нет.</td></tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div class="card">
-    <div class="toolbar"><h3>Перерасчёты</h3>
-        <a class="btn btn-sm btn-secondary" href="{% url 'billing:recalculation_create' account.pk %}">Добавить перерасчёт</a>
-    </div>
-    <table>
-        <thead><tr><th>Услуга</th><th>Период</th><th>Сумма</th><th>Причина</th><th>Кем</th></tr></thead>
-        <tbody>
-        {% for r in recalculations %}
-            <tr>
-                <td>{{ r.service.name }}</td>
-                <td>{{ r.period|date:"m.Y" }}</td>
-                <td class="mono">{{ r.amount|floatformat:2 }}</td>
-                <td>{{ r.get_reason_display }}</td>
-                <td class="muted">{{ r.created_by }}</td>
-            </tr>
-        {% empty %}
-            <tr><td colspan="5" class="muted">Перерасчётов нет.</td></tr>
+            <tr><td colspan="6" class="muted">Начислений пока нет.</td></tr>
         {% endfor %}
         </tbody>
     </table>

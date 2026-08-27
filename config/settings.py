@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "apps.billing",
     "apps.debts",
     "apps.receipts",
+    "apps.reports",
     "apps.audit",
 ]
 

@@ -1,6 +1,7 @@
 from django.db import models
 
 from apps.addresses.models import Unit
+from apps.services.models import Service
 
 
 class AccountStatus(models.TextChoices):
@@ -22,6 +23,10 @@ class PersonalAccount(models.Model):
     )
     status = models.CharField(
         "Статус", max_length=10, choices=AccountStatus.choices, default=AccountStatus.ACTIVE
+    )
+    services = models.ManyToManyField(
+        Service, related_name="accounts", verbose_name="Услуги", blank=True,
+        help_text="Какие услуги из справочника начисляются на этот лицевой счёт",
     )
     opened_at = models.DateField("Дата открытия")
     closed_at = models.DateField("Дата закрытия", null=True, blank=True)

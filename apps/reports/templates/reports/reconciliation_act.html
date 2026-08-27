@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Акт сверки — ЛС №{{ account.number }}</title>
+<style>
+    @page { size: A4; margin: 15mm; }
+    body { font-family: "DejaVu Sans", sans-serif; font-size: 11px; color: #222; }
+    h1 { font-size: 15px; margin-bottom: 2px; }
+    .subtitle { color: #555; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    th, td { border: 1px solid #999; padding: 4px 6px; text-align: left; }
+    th { background: #eee; }
+    .amount { text-align: right; white-space: nowrap; }
+    .summary td { border: none; padding: 2px 6px; }
+    .summary .label { text-align: right; font-weight: bold; }
+    .total-row td { font-weight: bold; border-top: 2px solid #222; }
+</style>
+</head>
+<body>
+    <h1>Акт сверки взаиморасчётов</h1>
+    <div class="subtitle">
+        Лицевой счёт №{{ account.number }} — {{ account.unit.house }}, кв./пом. {{ account.unit.number }}<br>
+        Наниматель: {{ responsible.full_name|default:"—" }}<br>
+        Период: {{ date_from|date:"d.m.Y" }} — {{ date_to|date:"d.m.Y" }}
+    </div>
+
+    <table class="summary" style="width:auto;">
+        <tr><td class="label">Сальдо на начало периода:</td><td class="amount">{{ opening_balance|floatformat:2 }}</td></tr>
+    </table>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Операция</th>
+                <th class="amount">Дебет (начислено)</th>
+                <th class="amount">Кредит (оплачено)</th>
+                <th class="amount">Сальдо</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+            <tr>
+                <td>{{ row.date|date:"d.m.Y" }}</td>
+                <td>{{ row.operation }}</td>
+                <td class="amount">{% if row.debit %}{{ row.debit|floatformat:2 }}{% endif %}</td>
+                <td class="amount">{% if row.credit %}{{ row.credit|floatformat:2 }}{% endif %}</td>
+                <td class="amount">{{ row.balance|floatformat:2 }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5">Операций за период нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="summary" style="width:auto;">
+        <tr class="total-row"><td class="label">Сальдо на конец периода:</td><td class="amount">{{ closing_balance|floatformat:2 }}</td></tr>
+    </table>
+</body>
+</html>

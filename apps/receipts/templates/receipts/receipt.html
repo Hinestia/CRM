@@ -52,7 +52,6 @@
     <table class="summary" style="width:auto;">
         <tr><td class="label">Входящее сальдо:</td><td class="amount">{{ charge.opening_balance|floatformat:2 }}</td></tr>
         <tr><td class="label">Начислено:</td><td class="amount">{{ charge.accrued_total|floatformat:2 }}</td></tr>
-        <tr><td class="label">Перерасчёт:</td><td class="amount">{{ charge.recalculation_total|floatformat:2 }}</td></tr>
         <tr><td class="label">Оплачено:</td><td class="amount">{{ charge.paid_total|floatformat:2 }}</td></tr>
         <tr class="total-row"><td class="label">Исходящее сальдо (к оплате):</td><td class="amount">{{ charge.closing_balance|floatformat:2 }}</td></tr>
     </table>

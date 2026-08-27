@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.accounts.models import PersonalAccount
 
-from .forms import GeneratePeriodForm, PaymentForm, RecalculationForm
+from .forms import GeneratePeriodForm, PaymentForm
 from .models import Charge
 from .services import generate_monthly_charges
 
@@ -29,23 +29,6 @@ def charge_list(request):
     return render(request, "billing/charge_list.html", {
         "charges": charges, "period": period, "generate_form": generate_form,
     })
-
-
-@login_required
-def recalculation_create(request, account_pk):
-    account = get_object_or_404(PersonalAccount, pk=account_pk)
-    if request.method == "POST":
-        form = RecalculationForm(request.POST)
-        if form.is_valid():
-            recalc = form.save(commit=False)
-            recalc.account = account
-            recalc.created_by = request.user
-            recalc.save()
-            messages.success(request, "Перерасчёт сохранён.")
-            return redirect("accounts:detail", pk=account.pk)
-    else:
-        form = RecalculationForm()
-    return render(request, "billing/recalculation_form.html", {"form": form, "account": account})
 
 
 @login_required

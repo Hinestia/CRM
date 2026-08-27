@@ -9,11 +9,12 @@ class PersonalAccountForm(forms.ModelForm):
         # registered_count не редактируется — считается автоматически по
         # числу действующих назначений в tenant_assignments (см. модель).
         fields = [
-            "number", "unit", "status",
+            "number", "unit", "status", "services",
             "opened_at", "closed_at", "notes",
         ]
         widgets = {
             "opened_at": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "closed_at": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "notes": forms.Textarea(attrs={"rows": 3}),
+            "services": forms.CheckboxSelectMultiple,
         }

@@ -7,7 +7,6 @@ from .models import AuditAction, AuditLogEntry
 TRACKED_MODELS = [
     "billing.Charge",
     "billing.ChargeLine",
-    "billing.Recalculation",
     "billing.Payment",
     "services.Tariff",
     "accounts.PersonalAccount",

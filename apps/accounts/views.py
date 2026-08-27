@@ -53,13 +53,13 @@ def account_list(request):
 @login_required
 def account_detail(request, pk):
     account = get_object_or_404(
-        PersonalAccount.objects.select_related("unit__house__street"), pk=pk
+        PersonalAccount.objects.select_related("unit__house__street").prefetch_related("services"),
+        pk=pk,
     )
     tenant_assignments = account.tenant_assignments.select_related("tenant").order_by("-start_date")
     charges = account.charges.order_by("-period")
-    contracts = account.contracts.order_by("-signed_date")
+    contracts = account.contracts.select_related("generated_file").order_by("-signed_date")
     meters = account.meters.select_related("service").prefetch_related("readings")
-    recalculations = account.recalculations.select_related("service").order_by("-created_at")[:20]
     payments = account.payments.order_by("-date")[:20]
     penalty_accruals = account.penalty_accruals.order_by("-calculation_date")[:10]
 
@@ -69,7 +69,6 @@ def account_detail(request, pk):
         "charges": charges,
         "contracts": contracts,
         "meters": meters,
-        "recalculations": recalculations,
         "payments": payments,
         "penalty_accruals": penalty_accruals,
     })

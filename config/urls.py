@@ -28,6 +28,7 @@ urlpatterns = [
     path("meters/", include("apps.meters.urls")),
     path("receipts/", include("apps.receipts.urls")),
     path("debts/", include("apps.debts.urls")),
+    path("reports/", include("apps.reports.urls")),
 ]
 
 if settings.DEBUG:

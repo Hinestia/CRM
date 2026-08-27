@@ -11,7 +11,7 @@
 </div>
 
 <div class="card-grid">
-<div class="card">
+<div class="card card-unit">
     <h3>Помещение</h3>
     <p>{{ account.unit.house }}, кв./пом. {{ account.unit.number }}
         (<a href="{% url 'addresses:house_detail' account.unit.house_id %}">карточка дома</a>)</p>
@@ -22,7 +22,7 @@
         S балкона: {{ account.unit.area_balcony }} м² (коэфф. {{ account.unit.balcony_coefficient }}) ·
         Расчётная площадь: {{ account.unit.billable_area }} м²
     </p>
-    <p>Прописано лиц: <strong>{{ account.registered_count }}</strong> (считается по списку ниже) ·
+    <p>Прописано лиц: <strong>{{ account.registered_count }}</strong> (считается по списку нанимателей) ·
         Открыт: {{ account.opened_at }}
         {% if account.closed_at %}· Закрыт: {{ account.closed_at }}{% endif %}</p>
     <p class="muted">
@@ -33,7 +33,7 @@
     {% if account.notes %}<p class="muted">{{ account.notes }}</p>{% endif %}
 </div>
 
-<div class="card">
+<div class="card card-tenants">
     <div class="toolbar"><h3>Наниматели и прописанные лица</h3>
         <button class="btn btn-sm" hx-get="{% url 'tenants:resident_create' account.pk %}" hx-target="#modal-root" hx-swap="innerHTML">+ Добавить человека</button>
     </div>
@@ -65,7 +65,7 @@
     </div>
 </div>
 
-<div class="card">
+<div class="card card-contracts">
     <div class="toolbar"><h3>Договоры</h3>
         <button class="btn btn-sm btn-secondary" hx-get="{% url 'contracts:create_for_account' account.pk %}" hx-target="#modal-root" hx-swap="innerHTML">Добавить договор</button>
     </div>
@@ -97,31 +97,6 @@
         </tbody>
     </table>
     </div>
-</div>
-
-<div class="card">
-    <div class="toolbar"><h3>Приборы учёта</h3>
-        <a class="btn btn-sm btn-secondary" href="{% url 'meters:meter_create' account.pk %}">Добавить прибор</a>
-    </div>
-    <table>
-        <thead><tr><th>Услуга</th><th>№ прибора</th><th>Последнее показание</th><th></th></tr></thead>
-        <tbody>
-        {% for m in meters %}
-            <tr>
-                <td>{{ m.service.name }}</td>
-                <td>{{ m.serial_number }}</td>
-                <td>
-                    {% with lr=m.last_reading %}
-                        {% if lr %}{{ lr.value }} ({{ lr.period|date:"m.Y" }}){% else %}—{% endif %}
-                    {% endwith %}
-                </td>
-                <td><a href="{% url 'meters:reading_create' m.pk %}">внести показание</a></td>
-            </tr>
-        {% empty %}
-            <tr><td colspan="4" class="muted">Приборов учёта нет.</td></tr>
-        {% endfor %}
-        </tbody>
-    </table>
 </div>
 </div>
 

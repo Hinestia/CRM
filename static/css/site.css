@@ -144,18 +144,29 @@ h3 {
     margin-bottom: 18px;
 }
 
-/* Сетка карточек: несколько блоков в ряд вместо растягивания на всю
-   ширину — колонки сами подстраиваются под ширину экрана (auto-fit),
-   на узких экранах схлопываются в один столбец. */
+/* Сетка карточек на карточке ЛС: слева друг под другом наниматели и
+   договоры (таблицам нужна ширина), справа — помещение на всю высоту
+   этих двух строк (там короткий текст, не таблица). На узких экранах
+   схлопывается в один столбец. */
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    grid-template-columns: 1.6fr 1fr;
+    grid-template-rows: auto auto;
     gap: 18px;
     align-items: start;
     margin-bottom: 18px;
 }
 .card-grid .card { margin-bottom: 0; min-width: 0; }
-.card-grid .card--wide { grid-column: 1 / -1; }
+.card-grid .card-tenants { grid-column: 1; grid-row: 1; }
+.card-grid .card-contracts { grid-column: 1; grid-row: 2; }
+.card-grid .card-unit { grid-column: 2; grid-row: 1 / span 2; }
+
+@media (max-width: 900px) {
+    .card-grid { grid-template-columns: 1fr; }
+    .card-grid .card-tenants,
+    .card-grid .card-contracts,
+    .card-grid .card-unit { grid-column: 1; grid-row: auto; }
+}
 
 .toolbar {
     display: flex;

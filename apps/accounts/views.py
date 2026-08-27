@@ -59,7 +59,6 @@ def account_detail(request, pk):
     tenant_assignments = account.tenant_assignments.select_related("tenant").order_by("-start_date")
     charges = account.charges.order_by("-period")
     contracts = account.contracts.select_related("generated_file").order_by("-signed_date")
-    meters = account.meters.select_related("service").prefetch_related("readings")
     payments = account.payments.order_by("-date")[:20]
     penalty_accruals = account.penalty_accruals.order_by("-calculation_date")[:10]
 
@@ -68,7 +67,6 @@ def account_detail(request, pk):
         "tenant_assignments": tenant_assignments,
         "charges": charges,
         "contracts": contracts,
-        "meters": meters,
         "payments": payments,
         "penalty_accruals": penalty_accruals,
     })

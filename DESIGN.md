@@ -70,9 +70,14 @@ Street ──< House ──< Unit ──< PersonalAccount ──< TenantAccountA
 - **Сальдо** — `Charge.opening_balance` берётся из `closing_balance`
   предыдущего периода того же лицевого счёта, `closing_balance = opening +
   accrued + recalculation - paid`.
-- **`Unit.billable_area`** — общая площадь + доля площади балкона
+- **`Unit.area_total`** считается автоматически (`Unit.save()`) как
+  `area_living + area_non_living + area_balcony` — не редактируется руками,
+  чтобы не расходилось с суммой компонентов.
+- **`Unit.billable_area`** — жилая + нежилая + доля площади балкона
   (`balcony_coefficient`, по умолчанию 0.3) — то, что реально идёт в тариф
-  «руб/м²».
+  «руб/м²». Балкон в `area_total` входит целиком, а для начислений
+  учитывается с понижающим коэффициентом, поэтому `billable_area` считается
+  отдельно от `area_total`, а не через него.
 
 ## 3. Ежемесячное начисление
 

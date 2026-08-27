@@ -101,7 +101,13 @@ class Unit(models.Model):
     def __str__(self):
         return f"{self.house}, кв./пом. {self.number}"
 
+    def save(self, *args, **kwargs):
+        self.area_total = self.area_living + self.area_non_living + self.area_balcony
+        super().save(*args, **kwargs)
+
     @property
     def billable_area(self) -> Decimal:
-        """Площадь, используемая для начислений «за м²» (общая + доля балкона)."""
-        return self.area_total + self.area_balcony * self.balcony_coefficient
+        """Площадь, используемая для начислений «за м²»: жилая + нежилая +
+        доля площади балкона (S общая включает балкон целиком, а не с
+        понижающим коэффициентом — для начислений он учитывается отдельно)."""
+        return self.area_living + self.area_non_living + self.area_balcony * self.balcony_coefficient

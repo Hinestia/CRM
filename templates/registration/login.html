@@ -1,15 +1,43 @@
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Вход — CRM ЖКУ</title>
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
 </head>
 <body>
-    <h1>Вход в систему</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Войти</button>
-    </form>
+    <div class="auth-page">
+        <div>
+            <div class="auth-card">
+                <div class="auth-logo">ЖКУ</div>
+                <h1 class="auth-title">CRM ЖКУ</h1>
+                <p class="auth-subtitle">Вход для сотрудников</p>
+
+                {% if form.non_field_errors %}
+                    <ul class="errorlist">
+                        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="field">
+                        <label for="{{ form.username.id_for_label }}">Логин</label>
+                        {{ form.username }}
+                        {{ form.username.errors }}
+                    </div>
+                    <div class="field">
+                        <label for="{{ form.password.id_for_label }}">Пароль</label>
+                        {{ form.password }}
+                        {{ form.password.errors }}
+                    </div>
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <button class="btn" type="submit">Войти</button>
+                </form>
+            </div>
+            <p class="auth-footer">Внутренняя система начисления ЖКУ</p>
+        </div>
+    </div>
 </body>
 </html>

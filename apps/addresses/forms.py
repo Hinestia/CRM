@@ -18,7 +18,9 @@ class HouseForm(forms.ModelForm):
 class UnitForm(forms.ModelForm):
     class Meta:
         model = Unit
+        # area_total не редактируется — считается автоматически как
+        # area_living + area_non_living + area_balcony (см. Unit.save()).
         fields = [
             "number", "type", "area_living", "area_non_living",
-            "area_total", "area_balcony", "balcony_coefficient",
+            "area_balcony", "balcony_coefficient",
         ]

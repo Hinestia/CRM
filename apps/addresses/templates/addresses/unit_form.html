@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}
+            {{ field.errors }}
+        </div>
+        {% endfor %}
+        <p class="helptext">S общая считается автоматически: S жилая + S нежилая (без учёта балкона).</p>
+        <button class="btn" type="submit">Сохранить</button>
+        <a class="btn btn-secondary" href="{% url 'addresses:house_detail' house.pk %}">Отмена</a>
+    </form>
+</div>
+{% if form.instance.pk %}
+<div class="card">
+    <h3>Текущая расчётная площадь</h3>
+    <p>S общая: <strong>{{ form.instance.area_total }}</strong> м²</p>
+</div>
+{% endif %}
+{% endblock %}

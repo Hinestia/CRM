@@ -1,0 +1,33 @@
+{% extends "modal_base.html" %}
+{% block modal_body %}
+<h2>Добавить человека</h2>
+<p class="modal-subtitle">ЛС №{{ account.number }} — заполните данные, и человек сразу будет прописан на этот счёт.</p>
+
+<form hx-post="{% url 'tenants:resident_create' account.pk %}" hx-target="#modal-root" hx-swap="innerHTML">
+    {% csrf_token %}
+    <h3>Данные человека</h3>
+    {% for field in tenant_form %}
+    <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+    </div>
+    {% endfor %}
+
+    <h3>Прописка на лицевой счёт</h3>
+    {% for field in assignment_form %}
+    <div class="field {% if field.name == 'is_primary' %}checkbox-field{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+    </div>
+    {% endfor %}
+
+    <button class="btn" type="submit">Добавить и прописать</button>
+    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-backdrop').remove();">Отмена</button>
+</form>
+<p class="muted" style="margin-top:12px;">
+    Человек уже есть в системе (например, переезжает с другого лицевого счёта)?
+    <a href="#" hx-get="{% url 'tenants:assign' account.pk %}" hx-target="#modal-root" hx-swap="innerHTML">Выбрать из уже существующих</a>.
+</p>
+{% endblock %}

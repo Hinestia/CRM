@@ -1,0 +1,414 @@
+:root {
+    --color-bg: #f2f4f8;
+    --color-surface: #ffffff;
+    --color-border: #e2e5eb;
+    --color-border-strong: #cdd2db;
+    --color-text: #1a1f2b;
+    --color-muted: #6b7280;
+    --color-primary: #3452e0;
+    --color-primary-dark: #2438ad;
+    --color-primary-light: #eef1fd;
+    --color-danger: #d0342c;
+    --color-danger-bg: #fdecec;
+    --color-success: #1f8a53;
+    --color-success-bg: #e8f7ef;
+    --color-warning: #b5750a;
+    --color-warning-bg: #fdf3e0;
+    --navbar-bg: #12172a;
+    --navbar-bg-2: #1a2140;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+    --shadow-md: 0 4px 14px rgba(16, 24, 40, 0.08);
+    --font-sans: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { color: var(--color-primary-dark); text-decoration: underline; }
+
+/* ---------- Навигация ---------- */
+
+.navbar {
+    background: linear-gradient(135deg, var(--navbar-bg) 0%, var(--navbar-bg-2) 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.navbar .brand {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: .01em;
+    padding: 15px 20px 15px 0;
+    color: #fff;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.navbar .brand::before {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    background: linear-gradient(135deg, #6c8bff, #3452e0);
+}
+.navbar nav {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1;
+}
+.navbar nav a {
+    color: #a6adc4;
+    padding: 15px 11px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: color .15s ease, border-color .15s ease;
+}
+.navbar nav a:hover, .navbar nav a.active {
+    color: #fff;
+    text-decoration: none;
+    border-bottom-color: var(--color-primary);
+}
+.navbar .user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    color: #a6adc4;
+    font-size: 13px;
+    white-space: nowrap;
+}
+.navbar .user .user-name { color: #fff; font-weight: 600; }
+.navbar .user .user-role {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+.navbar .user a { color: #a6adc4; transition: color .15s ease; }
+.navbar .user a:hover { color: #fff; text-decoration: none; }
+.navbar .logout-form { display: inline; margin: 0; }
+.navbar .logout-form button {
+    background: none;
+    border: none;
+    color: #a6adc4;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    transition: color .15s ease;
+}
+.navbar .logout-form button:hover { color: #fff; }
+
+.container {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+}
+
+h1 { font-size: 23px; font-weight: 700; margin: 0 0 18px; letter-spacing: -.01em; }
+h2 { font-size: 17px; font-weight: 600; margin: 28px 0 12px; }
+h3 {
+    font-size: 12px; margin: 0 0 12px; color: var(--color-muted);
+    text-transform: uppercase; letter-spacing: .06em; font-weight: 700;
+}
+
+/* ---------- Карточки ---------- */
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 20px;
+    margin-bottom: 18px;
+}
+
+/* Сетка карточек на карточке ЛС: слева друг под другом наниматели и
+   договоры (таблицам нужна ширина), справа — помещение на всю высоту
+   этих двух строк (там короткий текст, не таблица). На узких экранах
+   схлопывается в один столбец. */
+.card-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 18px;
+    align-items: start;
+    margin-bottom: 18px;
+}
+.card-grid .card { margin-bottom: 0; min-width: 0; }
+.card-grid .card-tenants { grid-column: 1; grid-row: 1; }
+.card-grid .card-contracts { grid-column: 1; grid-row: 2; }
+.card-grid .card-unit { grid-column: 2; grid-row: 1 / span 2; }
+
+@media (max-width: 900px) {
+    .card-grid { grid-template-columns: 1fr; }
+    .card-grid .card-tenants,
+    .card-grid .card-contracts,
+    .card-grid .card-unit { grid-column: 1; grid-row: auto; }
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+/* ---------- Кнопки ---------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    padding: 9px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: background .15s ease, box-shadow .15s ease, transform .05s ease;
+}
+.btn:hover { background: var(--color-primary-dark); text-decoration: none; color: #fff; box-shadow: var(--shadow-md); }
+.btn:active { transform: translateY(1px); }
+.btn-secondary { background: #fff; color: var(--color-text); border: 1px solid var(--color-border-strong); box-shadow: none; }
+.btn-secondary:hover { background: #f7f8fa; color: var(--color-text); box-shadow: none; }
+.btn-danger { background: var(--color-danger); }
+.btn-danger:hover { background: #a7261f; }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+
+/* ---------- Таблицы ---------- */
+
+table { width: 100%; border-collapse: collapse; }
+table th, table td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 13px;
+}
+table th {
+    color: var(--color-muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    background: #fafbfd;
+}
+table tbody tr:last-child td { border-bottom: none; }
+table tbody tr:hover td { background: var(--color-primary-light); }
+
+/* Таблица шире узкой колонки card-grid — скроллится сама, а не ломает
+   границы карточки/сетки. */
+.table-scroll { overflow-x: auto; }
+.table-scroll table { min-width: 480px; }
+
+/* ---------- Бейджи ---------- */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.badge-danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.badge-success { background: var(--color-success-bg); color: var(--color-success); }
+.badge-muted { background: #eef0f3; color: var(--color-muted); }
+.badge-muted::before { display: none; }
+
+/* ---------- Формы ---------- */
+
+form .field { margin-bottom: 14px; }
+form label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600; color: var(--color-text); }
+form input[type=text], form input[type=number], form input[type=date], form input[type=email],
+form input[type=month], form input[type=password], form select, form textarea {
+    width: 100%;
+    max-width: 420px;
+    padding: 8px 11px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--color-text);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+form input:focus, form select:focus, form textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+form .checkbox-field { display: flex; align-items: center; gap: 6px; }
+form .checkbox-field input { width: auto; }
+form ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+form ul li label { display: flex; align-items: center; gap: 6px; font-weight: 400; margin: 0; }
+form ul li input { width: auto; }
+form .errorlist { color: var(--color-danger); font-size: 12px; padding-left: 0; list-style: none; margin: 4px 0; }
+form .helptext { color: var(--color-muted); font-size: 12px; margin-top: 4px; }
+
+/* ---------- Сообщения ---------- */
+
+.messages { list-style: none; padding: 0; margin: 0 0 18px; }
+.messages li {
+    padding: 11px 15px;
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+.messages .success { background: var(--color-success-bg); color: var(--color-success); }
+.messages .error { background: var(--color-danger-bg); color: var(--color-danger); }
+.messages .info, .messages .warning { background: var(--color-warning-bg); color: var(--color-warning); }
+
+/* ---------- Дашборд ---------- */
+
+.stat-grid { display: flex; gap: 14px; flex-wrap: wrap; }
+.stat-card {
+    flex: 1; min-width: 180px;
+    border-left: 4px solid var(--color-primary);
+}
+.stat-card.stat-danger { border-left-color: var(--color-danger); }
+.stat-card.stat-warning { border-left-color: var(--color-warning); }
+.stat-card .value { font-size: 28px; font-weight: 700; letter-spacing: -.01em; }
+.stat-card .label { color: var(--color-muted); font-size: 12px; margin-top: 2px; }
+
+.search-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.search-bar input, .search-bar select {
+    padding: 8px 11px; border: 1px solid var(--color-border-strong); border-radius: var(--radius); font-size: 13px;
+}
+.search-bar input:focus, .search-bar select:focus {
+    outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.actions-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+
+.muted { color: var(--color-muted); }
+.text-right { text-align: right; }
+.mono { font-variant-numeric: tabular-nums; }
+
+.pagination { display: flex; gap: 6px; margin-top: 16px; }
+.pagination a, .pagination span {
+    padding: 5px 11px; border: 1px solid var(--color-border-strong); border-radius: var(--radius); font-size: 13px;
+}
+.pagination .current { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+/* ---------- Страница входа ---------- */
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, var(--navbar-bg) 0%, var(--navbar-bg-2) 55%, #2b3570 100%);
+    padding: 20px;
+}
+.auth-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    padding: 36px 32px 32px;
+}
+.auth-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6c8bff, var(--color-primary));
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    box-shadow: var(--shadow-md);
+}
+.auth-title { text-align: center; font-size: 19px; font-weight: 700; margin: 0 0 4px; }
+.auth-subtitle { text-align: center; font-size: 13px; color: var(--color-muted); margin: 0 0 26px; }
+.auth-card form .field { margin-bottom: 16px; }
+.auth-card form input {
+    max-width: none;
+    width: 100%;
+    padding: 10px 12px;
+}
+.auth-card .btn { width: 100%; justify-content: center; padding: 10px 16px; font-size: 14px; }
+.auth-card .errorlist {
+    background: var(--color-danger-bg); color: var(--color-danger);
+    border-radius: var(--radius); padding: 9px 12px !important; margin-bottom: 14px !important;
+    list-style: none;
+}
+.auth-footer { text-align: center; margin-top: 20px; font-size: 12px; color: rgba(255,255,255,0.55); }
+
+/* ---------- Модальные окна ---------- */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 15, 26, 0.55);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+.modal-dialog {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    width: 100%;
+    max-width: 560px;
+    padding: 26px 26px 22px;
+    position: relative;
+}
+.modal-dialog h2 { margin: 0 0 4px; font-size: 18px; }
+.modal-dialog .modal-subtitle { color: var(--color-muted); font-size: 13px; margin: 0 0 18px; }
+.modal-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: none; border: none;
+    font-size: 22px; line-height: 1;
+    cursor: pointer; color: var(--color-muted);
+    padding: 4px;
+}
+.modal-close:hover { color: var(--color-text); }
+.modal-dialog .field input, .modal-dialog .field select, .modal-dialog .field textarea { max-width: none; }
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator { display: inline; }
+.htmx-request.htmx-indicator { display: inline; }

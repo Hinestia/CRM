@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Адресный фонд{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <h1>Адресный фонд</h1>
+    <a class="btn" href="{% url 'addresses:house_create' %}">+ Новый дом</a>
+</div>
+
+<form class="search-bar" method="get">
+    <input type="text" name="q" value="{{ q }}" placeholder="Улица, номер дома...">
+    <button class="btn btn-secondary" type="submit">Найти</button>
+</form>
+
+<div class="card">
+    <table>
+        <thead><tr><th>Адрес</th><th>Помещений</th></tr></thead>
+        <tbody>
+        {% for house in houses %}
+            <tr>
+                <td><a href="{% url 'addresses:house_detail' house.pk %}">{{ house }}</a></td>
+                <td>{{ house.units.count }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="2" class="muted">Дома не заведены.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

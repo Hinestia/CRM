@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.name == "unit" %}
+            <button type="button" class="btn btn-sm btn-secondary" style="margin-top:6px;"
+                    hx-get="{% url 'addresses:unit_quick_create' %}" hx-target="#modal-root" hx-swap="innerHTML">
+                + Новое помещение
+            </button>
+            {% endif %}
+            {% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}
+            {{ field.errors }}
+        </div>
+        {% endfor %}
+        <button class="btn" type="submit">Сохранить</button>
+        {% if account %}<a class="btn btn-secondary" href="{% url 'accounts:detail' account.pk %}">Отмена</a>{% endif %}
+    </form>
+</div>
+{% endblock %}

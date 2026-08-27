@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}ЛС №{{ account.number }}{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <h1>Лицевой счёт №{{ account.number }}
+        {% if account.status == "active" %}<span class="badge badge-success">Открыт</span>
+        {% else %}<span class="badge badge-muted">Закрыт</span>{% endif %}
+    </h1>
+    <a class="btn btn-secondary" href="{% url 'reports:reconciliation_act' %}?account={{ account.pk }}" target="_blank">Акт сверки (PDF)</a>
+    <a class="btn btn-secondary" href="{% url 'accounts:update' account.pk %}">Редактировать</a>
+</div>
+
+<div class="card-grid">
+<div class="card card-unit">
+    <h3>Помещение</h3>
+    <p>{{ account.unit }}
+        (<a href="{% url 'addresses:house_detail' account.unit.house_id %}">карточка дома</a>)</p>
+    <p class="muted">
+        S общая: {{ account.unit.area_total }} м² ·
+        S жилая: {{ account.unit.area_living }} м² ·
+        S нежилая: {{ account.unit.area_non_living }} м²
+    </p>
+    <p>Прописано лиц: <strong>{{ account.registered_count }}</strong> (считается по списку нанимателей) ·
+        Открыт: {{ account.opened_at }}
+        {% if account.closed_at %}· Закрыт: {{ account.closed_at }}{% endif %}</p>
+    <p>Баланс:
+        {% if account.balance > 0 %}
+            <span class="badge badge-danger">{{ account.balance|floatformat:2 }} (долг)</span>
+        {% elif account.balance < 0 %}
+            <span class="badge badge-success">{{ account.balance|floatformat:2 }} (переплата)</span>
+        {% else %}
+            <span class="badge badge-muted">0.00</span>
+        {% endif %}
+    </p>
+    <p class="muted">
+        Услуги на этом ЛС:
+        {% for s in account.services.all %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% empty %}не выбраны — начисления не сформируются{% endfor %}
+        (<a href="{% url 'accounts:update' account.pk %}">изменить</a>)
+    </p>
+    {% if account.notes %}<p class="muted">{{ account.notes }}</p>{% endif %}
+</div>
+
+<div class="card card-tenants">
+    <div class="toolbar"><h3>Наниматели и прописанные лица</h3>
+        <button class="btn btn-sm" hx-get="{% url 'tenants:resident_create' account.pk %}" hx-target="#modal-root" hx-swap="innerHTML">+ Добавить человека</button>
+    </div>
+    <div class="table-scroll">
+    <table>
+        <thead><tr><th>ФИО</th><th>Основной</th><th>С</th><th>По</th><th>Основание</th><th></th></tr></thead>
+        <tbody>
+        {% for a in tenant_assignments %}
+            <tr>
+                <td><a href="{% url 'tenants:detail' a.tenant_id %}">{{ a.tenant.full_name }}</a></td>
+                <td>{% if a.is_primary %}да{% endif %}</td>
+                <td>{{ a.start_date }}</td>
+                <td>{{ a.end_date|default:"—" }}</td>
+                <td class="muted">{{ a.reason }}</td>
+                <td>
+                    {% if not a.end_date %}
+                    <form method="post" action="{% url 'tenants:assignment_end' a.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-secondary" type="submit">выписать</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="muted">Никто не прописан.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<div class="card card-contracts">
+    <div class="toolbar"><h3>Договоры</h3>
+        <button class="btn btn-sm btn-secondary" hx-get="{% url 'contracts:create_for_account' account.pk %}" hx-target="#modal-root" hx-swap="innerHTML">Добавить договор</button>
+    </div>
+    <div class="table-scroll">
+    <table>
+        <thead><tr><th>Номер</th><th>Заключён</th><th>Окончание</th><th colspan="3"></th></tr></thead>
+        <tbody>
+        {% for c in contracts %}
+            <tr>
+                <td>{{ c.number }}</td>
+                <td>{{ c.signed_date }}</td>
+                <td>{{ c.end_date|default:"бессрочно" }}</td>
+                <td><a href="#" hx-get="{% url 'contracts:update' c.pk %}" hx-target="#modal-root" hx-swap="innerHTML">изменить</a></td>
+                <td>
+                    <form method="post" action="{% url 'contracts:generate_pdf' c.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-secondary" type="submit">сформировать договор</button>
+                    </form>
+                </td>
+                <td>
+                    {% if c.generated_file %}
+                        <a href="{{ c.generated_file.file.url }}">скачать PDF</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="muted">Договоров нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+</div>
+
+<div class="card">
+    <div class="toolbar"><h3>Начисления</h3></div>
+    <form method="post" action="{% url 'accounts:generate_charge' account.pk %}" class="actions-row">
+        {% csrf_token %}
+        <input type="month" name="period" required value="{% now 'Y-m' %}">
+        <button class="btn btn-sm" type="submit">Сформировать начисление за период</button>
+    </form>
+    <div class="table-scroll">
+    <table>
+        <thead><tr><th>Период</th><th>Вход. сальдо</th><th>Начислено</th><th>Оплачено</th><th>Исх. сальдо</th><th>Статус</th><th>Квитанция</th><th></th></tr></thead>
+        <tbody>
+        {% for charge in charges %}
+            <tr>
+                <td>{{ charge.period|date:"m.Y" }}</td>
+                <td class="mono">{{ charge.opening_balance|floatformat:2 }}</td>
+                <td class="mono">{{ charge.accrued_total|floatformat:2 }}</td>
+                <td class="mono">{{ charge.paid_total|floatformat:2 }}</td>
+                <td class="mono">{{ charge.closing_balance|floatformat:2 }}</td>
+                <td>
+                    {% if charge.status == "final" %}<span class="badge badge-success">Проведено</span>
+                    {% else %}<span class="badge badge-muted">Черновик</span>{% endif %}
+                </td>
+                <td>
+                    {% if charge.receipt %}
+                        <a href="{{ charge.receipt.file.url }}">скачать PDF</a>
+                    {% else %}
+                        <form method="post" action="{% url 'receipts:generate_for_charge' charge.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-secondary" type="submit">сформировать</button>
+                        </form>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if charge.status != "final" %}
+                    <form method="post" action="{% url 'billing:charge_finalize' charge.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'accounts:detail' account.pk %}">
+                        <button class="btn btn-sm btn-secondary" type="submit">Провести</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="8" class="muted">Начислений пока нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="toolbar"><h3>Оплаты</h3>
+        <a class="btn btn-sm btn-secondary" href="{% url 'billing:payment_create' account.pk %}">Добавить оплату</a>
+    </div>
+    <table>
+        <thead><tr><th>Дата</th><th>Сумма</th><th>Номер платежа</th></tr></thead>
+        <tbody>
+        {% for p in payments %}
+            <tr><td>{{ p.date }}</td><td class="mono">{{ p.amount|floatformat:2 }}</td><td>{{ p.reference }}</td></tr>
+        {% empty %}
+            <tr><td colspan="3" class="muted">Оплат нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if penalty_accruals %}
+<div class="card">
+    <h3>Начисленная пеня</h3>
+    <table>
+        <thead><tr><th>Дата расчёта</th><th>Дней просрочки</th><th>Сумма долга</th><th>Пеня</th></tr></thead>
+        <tbody>
+        {% for pa in penalty_accruals %}
+            <tr><td>{{ pa.calculation_date }}</td><td>{{ pa.days_overdue }}</td><td class="mono">{{ pa.debt_amount|floatformat:2 }}</td><td class="mono">{{ pa.amount|floatformat:2 }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Отчёты{% endblock %}
+{% block content %}
+<h1>Отчёты и печатные ведомости</h1>
+<p class="muted">Каждый отчёт открывается в новой вкладке как PDF — можно просмотреть перед печатью, распечатать или сохранить средствами браузера.</p>
+
+<div class="card">
+    <h3>Реестр лицевых счетов</h3>
+    <p class="muted">Все лицевые счета с адресом, площадью, нанимателем и подключёнными услугами.</p>
+    <a class="btn btn-sm" href="{% url 'reports:accounts_register' %}" target="_blank">Сформировать PDF</a>
+</div>
+
+<div class="card">
+    <h3>Ведомость начислений за период</h3>
+    <form method="get" action="{% url 'reports:accruals_statement' %}" target="_blank" class="actions-row">
+        <input type="month" name="period" required value="{% now 'Y-m' %}">
+        <button class="btn btn-sm" type="submit">Сформировать PDF</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Реестр должников</h3>
+    <p class="muted">Лицевые счета с положительным исходящим сальдо по последнему начислению.</p>
+    <a class="btn btn-sm" href="{% url 'reports:debtors_register' %}" target="_blank">Сформировать PDF</a>
+</div>
+
+<div class="card">
+    <h3>Акт сверки по лицевому счёту</h3>
+    <form method="get" action="{% url 'reports:reconciliation_act' %}" target="_blank" class="actions-row">
+        <select name="account" required>
+            <option value="">— выберите ЛС —</option>
+            {% for account in accounts %}
+            <option value="{{ account.pk }}">№{{ account.number }} — {{ account.unit }}</option>
+            {% endfor %}
+        </select>
+        <label class="muted">с <input type="date" name="date_from"></label>
+        <label class="muted">по <input type="date" name="date_to"></label>
+        <button class="btn btn-sm" type="submit">Сформировать PDF</button>
+    </form>
+    <p class="muted" style="margin-top:6px;">Даты можно не указывать — по умолчанию с даты открытия ЛС по сегодня.</p>
+</div>
+{% endblock %}

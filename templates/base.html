@@ -1,0 +1,59 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}CRM ЖКУ{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+    <script src="{% static 'js/htmx.min.js' %}" defer></script>
+</head>
+<body>
+    <div class="navbar">
+        <div class="brand"><a href="{% url 'dashboard' %}" style="color:#fff;">CRM ЖКУ</a></div>
+        {% if user.is_authenticated %}
+        <nav>
+            <a href="{% url 'accounts:list' %}">Лицевые счета</a>
+            <a href="{% url 'addresses:house_list' %}">Адресный фонд</a>
+            <a href="{% url 'tenants:list' %}">Наниматели</a>
+            <a href="{% url 'services:list' %}">Услуги и тарифы</a>
+            <a href="{% url 'contracts:list' %}">Договоры</a>
+            <a href="{% url 'billing:charge_list' %}">Начисления</a>
+            <a href="{% url 'receipts:list' %}">Квитанции</a>
+            <a href="{% url 'debts:list' %}">Должники</a>
+            <a href="{% url 'reports:index' %}">Отчёты</a>
+        </nav>
+        <div class="user">
+            <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+            <span class="user-role">{{ user.get_role_display }}</span>
+            {% if user.is_staff %}<a href="{% url 'admin:index' %}">Админка</a>{% endif %}
+            <form method="post" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit">Выйти</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="container">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <div id="modal-root"></div>
+    <script>
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                var root = document.getElementById("modal-root");
+                if (root) root.innerHTML = "";
+            }
+        });
+    </script>
+</body>
+</html>

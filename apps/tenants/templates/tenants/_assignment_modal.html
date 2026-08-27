@@ -1,0 +1,22 @@
+{% extends "modal_base.html" %}
+{% block modal_body %}
+<h2>Прописать существующего человека</h2>
+<p class="modal-subtitle">ЛС №{{ account.number }}</p>
+
+<form hx-post="{% url 'tenants:assign' account.pk %}" hx-target="#modal-root" hx-swap="innerHTML">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="field {% if field.name == 'is_primary' %}checkbox-field{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+    </div>
+    {% endfor %}
+    <button class="btn" type="submit">Прописать</button>
+    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-backdrop').remove();">Отмена</button>
+</form>
+<p class="muted" style="margin-top:12px;">
+    Человека ещё нет в системе?
+    <a href="#" hx-get="{% url 'tenants:resident_create' account.pk %}" hx-target="#modal-root" hx-swap="innerHTML">Добавить нового</a> — заведёт его и сразу пропишет одной формой.
+</p>
+{% endblock %}

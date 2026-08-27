@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Реестр должников{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <h1>Реестр должников</h1>
+    <div class="actions-row" style="margin:0;">
+        <a class="btn btn-secondary" href="{% url 'debts:settings' %}">Настройки пени</a>
+        <form method="post" action="{% url 'debts:accrue_now' %}" style="display:inline;">
+            {% csrf_token %}
+            <button class="btn" type="submit">Начислить пеню сейчас</button>
+        </form>
+    </div>
+</div>
+
+{% if settings_obj %}
+<p class="muted">Льготный период: {{ settings_obj.grace_period_days }} дн. · ставка: {{ settings_obj.rate_per_day }} в день</p>
+{% else %}
+<p class="muted">Настройки пени ещё не заданы — <a href="{% url 'debts:settings' %}">задать</a>.</p>
+{% endif %}
+
+<div class="card">
+    <table>
+        <thead><tr><th>Лицевой счёт</th><th>Адрес</th><th>Сумма долга</th></tr></thead>
+        <tbody>
+        {% for account in accounts %}
+            <tr>
+                <td><a href="{% url 'accounts:detail' account.pk %}">№{{ account.number }}</a></td>
+                <td>{{ account.unit }}</td>
+                <td class="mono"><span class="badge badge-danger">{{ account.last_closing_balance|floatformat:2 }}</span></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="3" class="muted">Должников нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

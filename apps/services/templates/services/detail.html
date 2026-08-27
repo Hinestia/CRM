@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ service.name }}{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <h1>{{ service.name }}</h1>
+    <a class="btn btn-secondary" href="{% url 'services:tariff_create' service.pk %}">+ Новый тариф</a>
+</div>
+<p class="muted">Код: {{ service.code }} · Способ расчёта: {{ service.get_calculation_method_display }} · Ед. изм.: {{ service.unit_of_measure|default:"—" }}</p>
+
+<div class="card">
+    <h3>История тарифов</h3>
+    <table>
+        <thead><tr><th>Ставка</th><th>Действует с</th><th>Действует по</th><th>Кем установлен</th></tr></thead>
+        <tbody>
+        {% for tariff in tariffs %}
+            <tr>
+                <td class="mono">{{ tariff.rate }}</td>
+                <td>{{ tariff.valid_from }}</td>
+                <td>{{ tariff.valid_to|default:"по настоящее время" }}</td>
+                <td class="muted">{{ tariff.created_by|default:"—" }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" class="muted">Тарифы не заданы.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

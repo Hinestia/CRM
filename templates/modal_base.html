@@ -1,0 +1,6 @@
+<div class="modal-backdrop" onclick="if (event.target === this) this.remove();">
+    <div class="modal-dialog">
+        <button type="button" class="modal-close" onclick="this.closest('.modal-backdrop').remove();" aria-label="Закрыть">&times;</button>
+        {% block modal_body %}{% endblock %}
+    </div>
+</div>

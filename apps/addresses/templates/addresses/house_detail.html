@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ house }}{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <h1>{{ house }}</h1>
+    <a class="btn btn-secondary" href="{% url 'addresses:unit_create' house.pk %}">+ Добавить помещение</a>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+        <tr><th>№ помещения</th><th>Тип</th><th>S общая</th><th>S жилая</th><th>Лицевой счёт</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for unit in units %}
+            <tr>
+                <td>{{ unit.number }}</td>
+                <td>{{ unit.get_type_display }}</td>
+                <td class="mono">{{ unit.area_total }}</td>
+                <td class="mono">{{ unit.area_living }}</td>
+                <td>
+                    {% with acc=unit.accounts.first %}
+                        {% if acc %}<a href="{% url 'accounts:detail' acc.pk %}">№{{ acc.number }}</a>
+                        {% else %}<span class="muted">не открыт</span>{% endif %}
+                    {% endwith %}
+                </td>
+                <td><a href="{% url 'addresses:unit_update' unit.pk %}">изменить</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="muted">Помещений не заведено.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

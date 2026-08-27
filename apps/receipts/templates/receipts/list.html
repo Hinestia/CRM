@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Квитанции{% endblock %}
+{% block content %}
+<h1>Квитанции</h1>
+
+<div class="card">
+    <h3>Массовая генерация за период</h3>
+    <form method="post" action="{% url 'receipts:generate_for_period' %}" class="actions-row">
+        {% csrf_token %}
+        <input type="month" name="period" required>
+        <button class="btn" type="submit">Сформировать все квитанции за период</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Последние сформированные</h3>
+    <table>
+        <thead><tr><th>Лицевой счёт</th><th>Период</th><th>Сформирована</th><th></th></tr></thead>
+        <tbody>
+        {% for r in receipts %}
+            <tr>
+                <td><a href="{% url 'accounts:detail' r.charge.account_id %}">№{{ r.charge.account.number }}</a></td>
+                <td>{{ r.charge.period|date:"m.Y" }}</td>
+                <td>{{ r.generated_at|date:"d.m.Y H:i" }}</td>
+                <td><a href="{{ r.file.url }}">скачать PDF</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" class="muted">Квитанций пока нет.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

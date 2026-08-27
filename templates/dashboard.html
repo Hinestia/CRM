@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Главная — CRM ЖКУ{% endblock %}
+{% block content %}
+<h1>Главная</h1>
+
+<div class="stat-grid">
+    <div class="card stat-card">
+        <div class="value">{{ accounts_count }}</div>
+        <div class="label">Активных лицевых счетов</div>
+    </div>
+    <div class="card stat-card stat-danger">
+        <div class="value">{{ debtors_count }}</div>
+        <div class="label">Лицевых счетов с долгом</div>
+    </div>
+    <div class="card stat-card stat-warning">
+        <div class="value">{{ expiring_contracts|length }}</div>
+        <div class="label">Договоров истекает в течение 30 дней</div>
+    </div>
+</div>
+
+<h2>Договоры, истекающие в ближайшие 30 дней</h2>
+<div class="card">
+    {% if expiring_contracts %}
+    <table>
+        <thead><tr><th>Договор</th><th>Лицевой счёт</th><th>Дата окончания</th></tr></thead>
+        <tbody>
+        {% for c in expiring_contracts %}
+            <tr>
+                <td>№{{ c.number }}</td>
+                <td><a href="{% url 'accounts:detail' c.account_id %}">ЛС №{{ c.account.number }}</a></td>
+                <td>{{ c.end_date }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="muted">Нет договоров, истекающих в ближайшее время.</p>
+    {% endif %}
+</div>
+
+<h2>Последние сформированные начисления</h2>
+<div class="card">
+    {% if latest_charges %}
+    <table>
+        <thead><tr><th>Лицевой счёт</th><th>Период</th><th>Начислено</th><th>Сальдо</th></tr></thead>
+        <tbody>
+        {% for charge in latest_charges %}
+            <tr>
+                <td><a href="{% url 'accounts:detail' charge.account_id %}">ЛС №{{ charge.account.number }}</a></td>
+                <td>{{ charge.period|date:"m.Y" }}</td>
+                <td class="mono">{{ charge.accrued_total|floatformat:2 }}</td>
+                <td class="mono">{{ charge.closing_balance|floatformat:2 }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="muted">Начислений пока нет.</p>
+    {% endif %}
+</div>
+{% endblock %}

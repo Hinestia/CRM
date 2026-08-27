@@ -1,0 +1,118 @@
+from datetime import date
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+
+from apps.accounts.models import PersonalAccount
+from config.htmx_utils import htmx_redirect
+
+from .forms import AssignmentDetailsForm, TenantAccountAssignmentForm, TenantForm
+from .models import Tenant, TenantAccountAssignment
+
+
+@login_required
+def tenant_list(request):
+    q = request.GET.get("q", "").strip()
+    tenants = Tenant.objects.order_by("last_name", "first_name")
+    if q:
+        tenants = tenants.filter(
+            Q(last_name__icontains=q) | Q(first_name__icontains=q) | Q(middle_name__icontains=q)
+            | Q(phone__icontains=q) | Q(email__icontains=q) | Q(passport_number__icontains=q)
+        )
+    return render(request, "tenants/list.html", {"tenants": tenants, "q": q})
+
+
+@login_required
+def tenant_detail(request, pk):
+    tenant = get_object_or_404(Tenant, pk=pk)
+    assignments = tenant.account_assignments.select_related(
+        "account", "account__unit__house__street"
+    ).order_by("-start_date")
+    return render(request, "tenants/detail.html", {"tenant": tenant, "assignments": assignments})
+
+
+@login_required
+def tenant_create(request):
+    if request.method == "POST":
+        form = TenantForm(request.POST)
+        if form.is_valid():
+            tenant = form.save()
+            messages.success(request, f"Наниматель {tenant.full_name} добавлен.")
+            return redirect("tenants:detail", pk=tenant.pk)
+    else:
+        form = TenantForm()
+    return render(request, "tenants/form.html", {"form": form, "title": "Новый наниматель"})
+
+
+@login_required
+def tenant_update(request, pk):
+    tenant = get_object_or_404(Tenant, pk=pk)
+    if request.method == "POST":
+        form = TenantForm(request.POST, instance=tenant)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Данные нанимателя обновлены.")
+            return redirect("tenants:detail", pk=tenant.pk)
+    else:
+        form = TenantForm(instance=tenant)
+    return render(request, "tenants/form.html", {"form": form, "title": f"Редактирование — {tenant}"})
+
+
+@login_required
+def resident_create(request, account_pk):
+    """Основной сценарий паспортного стола: сразу завести нового человека
+    (с паспортными данными) и прописать его на этот лицевой счёт — модальным
+    окном поверх карточки ЛС, без ухода на отдельную страницу."""
+    account = get_object_or_404(PersonalAccount, pk=account_pk)
+    if request.method == "POST":
+        tenant_form = TenantForm(request.POST)
+        assignment_form = AssignmentDetailsForm(request.POST)
+        if tenant_form.is_valid() and assignment_form.is_valid():
+            tenant = tenant_form.save()
+            assignment = assignment_form.save(commit=False)
+            assignment.account = account
+            assignment.tenant = tenant
+            assignment.save()
+            messages.success(
+                request, f"{tenant.full_name} добавлен(а) и прописан(а) на ЛС №{account.number}."
+            )
+            return htmx_redirect(reverse("accounts:detail", args=[account.pk]))
+    else:
+        tenant_form = TenantForm()
+        assignment_form = AssignmentDetailsForm(initial={"start_date": date.today()})
+    return render(request, "tenants/_resident_modal.html", {
+        "tenant_form": tenant_form, "assignment_form": assignment_form, "account": account,
+    })
+
+
+@login_required
+def assignment_create(request, account_pk):
+    """Прописать на ЛС человека, который уже заведён в системе ранее
+    (например, переезжает с другого лицевого счёта) — тоже модалкой."""
+    account = get_object_or_404(PersonalAccount, pk=account_pk)
+    if request.method == "POST":
+        form = TenantAccountAssignmentForm(request.POST)
+        if form.is_valid():
+            assignment = form.save(commit=False)
+            assignment.account = account
+            assignment.save()
+            messages.success(request, f"{assignment.tenant} назначен(а) на ЛС №{account.number}.")
+            return htmx_redirect(reverse("accounts:detail", args=[account.pk]))
+    else:
+        form = TenantAccountAssignmentForm(initial={"start_date": date.today()})
+    return render(request, "tenants/_assignment_modal.html", {
+        "form": form, "account": account,
+    })
+
+
+@login_required
+def assignment_end(request, pk):
+    assignment = get_object_or_404(TenantAccountAssignment, pk=pk)
+    if request.method == "POST":
+        assignment.end_date = date.today()
+        assignment.save(update_fields=["end_date"])
+        messages.success(request, "Назначение завершено.")
+    return redirect("accounts:detail", pk=assignment.account_id)

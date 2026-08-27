@@ -1,0 +1,6 @@
+<select id="id_unit" name="unit" hx-swap-oob="true" required>
+    <option value="">---------</option>
+    {% for u in units %}
+    <option value="{{ u.pk }}" {% if u.pk == selected_unit.pk %}selected{% endif %}>{{ u }}</option>
+    {% endfor %}
+</select>

@@ -27,7 +27,6 @@ class NoActiveContractTemplate(Exception):
 def _contract_context(contract: Contract) -> dict:
     account = contract.account
     unit = account.unit
-    house = unit.house
     responsible = account.current_responsible
     services = account.services.filter(is_active=True).order_by("sort_order", "name")
 
@@ -47,9 +46,8 @@ def _contract_context(contract: Contract) -> dict:
             if responsible and responsible.passport_issued_date else ""
         ),
         "tenant_phone": responsible.phone if responsible else "",
-        "address": f"{house}, кв./пом. {unit.number}",
+        "address": str(unit),
         "area_total": str(unit.area_total),
-        "area_billable": str(unit.billable_area),
         "services": ", ".join(s.name for s in services) or "—",
     }
 

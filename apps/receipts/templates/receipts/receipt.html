@@ -22,7 +22,7 @@
     <div class="subtitle">Лицевой счёт №{{ charge.account.number }} — {{ charge.period|date:"F Y" }}</div>
 
     <table class="summary" style="width:auto;">
-        <tr><td class="label">Адрес:</td><td>{{ charge.account.unit.house }}, кв./пом. {{ charge.account.unit.number }}</td></tr>
+        <tr><td class="label">Адрес:</td><td>{{ charge.account.unit }}</td></tr>
         <tr><td class="label">Плательщик:</td><td>{{ responsible.full_name|default:"—" }}</td></tr>
         <tr><td class="label">Площадь:</td><td>{{ charge.account.unit.area_total }} м²</td></tr>
         <tr><td class="label">Зарегистрировано лиц:</td><td>{{ charge.account.registered_count }}</td></tr>

@@ -20,14 +20,14 @@
     <table>
         <thead>
         <tr>
-            <th>№ ЛС</th><th>Адрес</th><th>Статус</th><th>Прописано</th><th>Сальдо</th>
+            <th>№ ЛС</th><th>Адрес</th><th>Статус</th><th>Прописано</th><th>Баланс</th>
         </tr>
         </thead>
         <tbody>
         {% for account in page %}
             <tr>
                 <td><a href="{% url 'accounts:detail' account.pk %}">{{ account.number }}</a></td>
-                <td>{{ account.unit.house }}, кв./пом. {{ account.unit.number }}</td>
+                <td>{{ account.unit }}</td>
                 <td>
                     {% if account.status == "active" %}<span class="badge badge-success">Открыт</span>
                     {% else %}<span class="badge badge-muted">Закрыт</span>{% endif %}
@@ -36,8 +36,10 @@
                 <td class="mono">
                     {% if account.last_closing_balance > 0 %}
                         <span class="badge badge-danger">{{ account.last_closing_balance|floatformat:2 }}</span>
+                    {% elif account.last_closing_balance < 0 %}
+                        <span class="badge badge-success">{{ account.last_closing_balance|floatformat:2 }}</span>
                     {% else %}
-                        {{ account.last_closing_balance|floatformat:2|default:"—" }}
+                        {{ account.last_closing_balance|floatformat:2|default:"0.00" }}
                     {% endif %}
                 </td>
             </tr>

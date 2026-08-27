@@ -28,21 +28,23 @@
                 <th>Наниматель</th>
                 <th>Статус</th>
                 <th>Услуги</th>
+                <th class="amount">Баланс</th>
             </tr>
         </thead>
         <tbody>
         {% for account in accounts %}
             <tr>
                 <td>{{ account.number }}</td>
-                <td>{{ account.unit.house }}, кв./пом. {{ account.unit.number }}</td>
+                <td>{{ account.unit }}</td>
                 <td class="amount">{{ account.unit.area_total }}</td>
                 <td class="amount">{{ account.registered_count }}</td>
                 <td>{{ account.current_responsible.full_name|default:"—" }}</td>
                 <td>{{ account.get_status_display }}</td>
                 <td>{% for s in account.services.all %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td>
+                <td class="amount">{{ account.last_closing_balance|floatformat:2|default:"0.00" }}</td>
             </tr>
         {% empty %}
-            <tr><td colspan="7">Лицевых счетов нет.</td></tr>
+            <tr><td colspan="8">Лицевых счетов нет.</td></tr>
         {% endfor %}
         </tbody>
     </table>

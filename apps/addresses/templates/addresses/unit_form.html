@@ -13,7 +13,7 @@
             {{ field.errors }}
         </div>
         {% endfor %}
-        <p class="helptext">S общая считается автоматически: S жилая + S нежилая + S балкона.</p>
+        <p class="helptext">S общая считается автоматически: S жилая + S нежилая (без учёта балкона).</p>
         <button class="btn" type="submit">Сохранить</button>
         <a class="btn btn-secondary" href="{% url 'addresses:house_detail' house.pk %}">Отмена</a>
     </form>
@@ -21,8 +21,7 @@
 {% if form.instance.pk %}
 <div class="card">
     <h3>Текущая расчётная площадь</h3>
-    <p>S общая: <strong>{{ form.instance.area_total }}</strong> м² ·
-       Расчётная площадь для начислений: <strong>{{ form.instance.billable_area }}</strong> м²</p>
+    <p>S общая: <strong>{{ form.instance.area_total }}</strong> м²</p>
 </div>
 {% endif %}
 {% endblock %}

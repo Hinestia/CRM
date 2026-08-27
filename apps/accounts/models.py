@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 
 from apps.addresses.models import Unit
@@ -54,6 +56,19 @@ class PersonalAccount(models.Model):
             .first()
         )
         return assignment.tenant if assignment else None
+
+    @property
+    def balance(self):
+        """Текущий баланс ЛС = исходящее сальдо последнего начисления
+        (черновик или проведённое — не важно, оно уже учитывает все
+        поступившие оплаты). Положительное значение — задолженность,
+        отрицательное — переплата, 0 — если начислений ещё не было.
+
+        Намеренно не хранится отдельным полем: при масштабе системы
+        (до ~1000 счетов) риск рассинхронизации с историей начислений/
+        оплат весомее выигрыша в скорости чтения — см. DESIGN.md."""
+        latest_charge = self.charges.order_by("-period").first()
+        return latest_charge.closing_balance if latest_charge else Decimal("0")
 
     @property
     def registered_count(self) -> int:

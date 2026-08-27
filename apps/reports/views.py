@@ -3,6 +3,7 @@ from datetime import date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import models
+from django.db.models import OuterRef, Subquery
 from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.accounts.models import PersonalAccount
@@ -20,9 +21,11 @@ def reports_index(request):
 
 @login_required
 def accounts_register_pdf(request):
+    latest_charge = Charge.objects.filter(account=OuterRef("pk")).order_by("-period")
     accounts = (
         PersonalAccount.objects.select_related("unit__house__street")
         .prefetch_related("services")
+        .annotate(last_closing_balance=Subquery(latest_charge.values("closing_balance")[:1]))
         .order_by("number")
     )
     return render_pdf_response(

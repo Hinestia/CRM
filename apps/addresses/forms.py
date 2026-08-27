@@ -21,11 +21,9 @@ class UnitForm(forms.ModelForm):
     class Meta:
         model = Unit
         # area_total не редактируется — считается автоматически как
-        # area_living + area_non_living + area_balcony (см. Unit.save()).
-        fields = [
-            "number", "type", "area_living", "area_non_living",
-            "area_balcony", "balcony_coefficient",
-        ]
+        # area_living + area_non_living (см. Unit.save()). Площадь
+        # балкона в расчёт не входит (см. ТЗ) — отдельного поля для неё нет.
+        fields = ["number", "type", "area_living", "area_non_living"]
 
 
 class UnitWithHouseForm(forms.Form):
@@ -47,12 +45,4 @@ class UnitWithHouseForm(forms.Form):
     area_non_living = forms.DecimalField(
         label="S нежилая, м²", max_digits=8, decimal_places=2,
         min_value=Decimal("0"), initial=Decimal("0"),
-    )
-    area_balcony = forms.DecimalField(
-        label="S балкона/лоджии, м²", max_digits=8, decimal_places=2,
-        min_value=Decimal("0"), initial=Decimal("0"),
-    )
-    balcony_coefficient = forms.DecimalField(
-        label="Коэффициент площади балкона", max_digits=3, decimal_places=2,
-        initial=Decimal("0.30"),
     )

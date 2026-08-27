@@ -34,7 +34,7 @@
         {% for charge in charges %}
             <tr>
                 <td>{{ charge.account.number }}</td>
-                <td>{{ charge.account.unit.house }}, кв./пом. {{ charge.account.unit.number }}</td>
+                <td>{{ charge.account.unit }}</td>
                 <td class="amount">{{ charge.opening_balance|floatformat:2 }}</td>
                 <td class="amount">{{ charge.accrued_total|floatformat:2 }}</td>
                 <td class="amount">{{ charge.paid_total|floatformat:2 }}</td>

@@ -19,6 +19,6 @@ class HouseAdmin(admin.ModelAdmin):
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
-    list_display = ("house", "number", "type", "area_total", "area_living", "area_balcony")
+    list_display = ("house", "number", "type", "area_total", "area_living", "area_non_living")
     list_filter = ("type",)
     search_fields = ("house__street__name", "house__number", "number")

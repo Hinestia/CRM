@@ -20,7 +20,7 @@
 <body>
     <h1>Акт сверки взаиморасчётов</h1>
     <div class="subtitle">
-        Лицевой счёт №{{ account.number }} — {{ account.unit.house }}, кв./пом. {{ account.unit.number }}<br>
+        Лицевой счёт №{{ account.number }} — {{ account.unit }}<br>
         Наниматель: {{ responsible.full_name|default:"—" }}<br>
         Период: {{ date_from|date:"d.m.Y" }} — {{ date_to|date:"d.m.Y" }}
     </div>

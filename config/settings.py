@@ -181,9 +181,13 @@ CONTRACT_EXPIRY_WARNING_DAYS = int(os.environ.get("CONTRACT_EXPIRY_WARNING_DAYS"
 
 
 CELERY_BEAT_SCHEDULE = {
-    "generate-monthly-charges": {
-        "task": "apps.billing.tasks.generate_monthly_charges_task",
-        "schedule": crontab(day_of_month=str(BILLING_GENERATION_DAY), hour=3, minute=0),
+    # Ежедневно, а не разово в BILLING_GENERATION_DAY: задача сама решает
+    # по каждому ЛС, чего не хватает, и идемпотентна — так система
+    # самовосстанавливается после простоя Celery/сервера любой длины,
+    # а не ждёт следующего попадания в дату по крону (см. catch_up_charges).
+    "catch-up-charges-daily": {
+        "task": "apps.billing.tasks.catch_up_charges_task",
+        "schedule": crontab(hour=3, minute=0),
     },
     "accrue-penalties-daily": {
         "task": "apps.debts.tasks.accrue_penalties_task",

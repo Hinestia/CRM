@@ -32,7 +32,7 @@
         {% for account in accounts %}
             <tr>
                 <td>{{ account.number }}</td>
-                <td>{{ account.unit.house }}, кв./пом. {{ account.unit.number }}</td>
+                <td>{{ account.unit }}</td>
                 <td>{{ account.current_responsible.full_name|default:"—" }}</td>
                 <td>{{ account.current_responsible.phone|default:"—" }}</td>
                 <td class="amount">{{ account.last_closing_balance|floatformat:2 }}</td>

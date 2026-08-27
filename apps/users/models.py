@@ -6,7 +6,6 @@ class Role(models.TextChoices):
     ADMIN = "admin", "Администратор"
     ACCOUNTANT = "accountant", "Бухгалтер"
     PASSPORT_OFFICER = "passport_officer", "Паспортист"
-    ENGINEER = "engineer", "Инженер"
     READONLY = "readonly", "Только просмотр"
 
 
@@ -40,7 +39,3 @@ class User(AbstractUser):
     @property
     def is_passport_officer(self):
         return self.role == Role.PASSPORT_OFFICER or self.is_superuser
-
-    @property
-    def is_engineer(self):
-        return self.role == Role.ENGINEER or self.is_superuser

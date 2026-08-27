@@ -1,12 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from apps.accounts.models import PersonalAccount
 
 from .forms import GeneratePeriodForm, PaymentForm
 from .models import Charge
-from .services import generate_monthly_charges
+from .services import finalize_charge, generate_monthly_charges
 
 
 @login_required
@@ -29,6 +30,22 @@ def charge_list(request):
     return render(request, "billing/charge_list.html", {
         "charges": charges, "period": period, "generate_form": generate_form,
     })
+
+
+@login_required
+@require_POST
+def charge_finalize(request, pk):
+    charge = get_object_or_404(Charge, pk=pk)
+    finalize_charge(charge)
+    messages.success(
+        request,
+        f"Начисление за {charge.period:%m.%Y} по ЛС №{charge.account.number} проведено — "
+        f"дальше не пересчитывается автоматически.",
+    )
+    # redirect() умеет и путь ("/accounts/5/"), и имя маршрута — оба варианта
+    # приходят из разных мест (карточка ЛС передаёт путь, список начислений
+    # своё имя по умолчанию).
+    return redirect(request.POST.get("next") or "billing:charge_list")
 
 
 @login_required

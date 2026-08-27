@@ -48,10 +48,10 @@ class House(models.Model):
         ordering = ("street", "number")
 
     def __str__(self):
-        parts = [str(self.street), self.number]
+        house_part = f"д.{self.number}"
         if self.building:
-            parts.append(f"к.{self.building}")
-        return " ".join(parts)
+            house_part += f" к.{self.building}"
+        return f"{self.street}, {house_part}"
 
 
 class UnitType(models.TextChoices):
@@ -82,15 +82,6 @@ class Unit(models.Model):
         "S общая, м²", max_digits=8, decimal_places=2,
         default=Decimal("0"), validators=[MinValueValidator(Decimal("0"))],
     )
-    area_balcony = models.DecimalField(
-        "S балкона/лоджии, м²", max_digits=8, decimal_places=2,
-        default=Decimal("0"), validators=[MinValueValidator(Decimal("0"))],
-    )
-    balcony_coefficient = models.DecimalField(
-        "Коэффициент площади балкона",
-        max_digits=3, decimal_places=2, default=Decimal("0.30"),
-        help_text="Применяется к S балкона при расчёте начислений (обычно 0.3 или 0.5)",
-    )
 
     class Meta:
         verbose_name = "Помещение"
@@ -99,15 +90,8 @@ class Unit(models.Model):
         ordering = ("house", "number")
 
     def __str__(self):
-        return f"{self.house}, кв./пом. {self.number}"
+        return f"{self.house}, кв. {self.number}"
 
     def save(self, *args, **kwargs):
-        self.area_total = self.area_living + self.area_non_living + self.area_balcony
+        self.area_total = self.area_living + self.area_non_living
         super().save(*args, **kwargs)
-
-    @property
-    def billable_area(self) -> Decimal:
-        """Площадь, используемая для начислений «за м²»: жилая + нежилая +
-        доля площади балкона (S общая включает балкон целиком, а не с
-        понижающим коэффициентом — для начислений он учитывается отдельно)."""
-        return self.area_living + self.area_non_living + self.area_balcony * self.balcony_coefficient

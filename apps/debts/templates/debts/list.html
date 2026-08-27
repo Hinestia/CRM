@@ -25,7 +25,7 @@
         {% for account in accounts %}
             <tr>
                 <td><a href="{% url 'accounts:detail' account.pk %}">№{{ account.number }}</a></td>
-                <td>{{ account.unit.house }}, пом. {{ account.unit.number }}</td>
+                <td>{{ account.unit }}</td>
                 <td class="mono"><span class="badge badge-danger">{{ account.last_closing_balance|floatformat:2 }}</span></td>
             </tr>
         {% empty %}

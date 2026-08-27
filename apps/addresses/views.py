@@ -104,7 +104,6 @@ def unit_quick_create(request):
                 unit = Unit.objects.create(
                     house=house, number=cd["unit_number"], type=cd["unit_type"],
                     area_living=cd["area_living"], area_non_living=cd["area_non_living"],
-                    area_balcony=cd["area_balcony"], balcony_coefficient=cd["balcony_coefficient"],
                 )
                 messages.success(request, f"Помещение «{unit}» добавлено.")
                 return render(request, "addresses/_unit_oob_swap.html", {

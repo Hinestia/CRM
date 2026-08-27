@@ -22,7 +22,7 @@
         {% for a in assignments %}
             <tr>
                 <td><a href="{% url 'accounts:detail' a.account_id %}">№{{ a.account.number }}</a></td>
-                <td>{{ a.account.unit.house }}, пом. {{ a.account.unit.number }}</td>
+                <td>{{ a.account.unit }}</td>
                 <td>{% if a.is_primary %}да{% endif %}</td>
                 <td>{{ a.start_date }}</td>
                 <td>{{ a.end_date|default:"—" }}</td>

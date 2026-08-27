@@ -13,18 +13,25 @@
 <div class="card-grid">
 <div class="card card-unit">
     <h3>Помещение</h3>
-    <p>{{ account.unit.house }}, кв./пом. {{ account.unit.number }}
+    <p>{{ account.unit }}
         (<a href="{% url 'addresses:house_detail' account.unit.house_id %}">карточка дома</a>)</p>
     <p class="muted">
         S общая: {{ account.unit.area_total }} м² ·
         S жилая: {{ account.unit.area_living }} м² ·
-        S нежилая: {{ account.unit.area_non_living }} м² ·
-        S балкона: {{ account.unit.area_balcony }} м² (коэфф. {{ account.unit.balcony_coefficient }}) ·
-        Расчётная площадь: {{ account.unit.billable_area }} м²
+        S нежилая: {{ account.unit.area_non_living }} м²
     </p>
     <p>Прописано лиц: <strong>{{ account.registered_count }}</strong> (считается по списку нанимателей) ·
         Открыт: {{ account.opened_at }}
         {% if account.closed_at %}· Закрыт: {{ account.closed_at }}{% endif %}</p>
+    <p>Баланс:
+        {% if account.balance > 0 %}
+            <span class="badge badge-danger">{{ account.balance|floatformat:2 }} (долг)</span>
+        {% elif account.balance < 0 %}
+            <span class="badge badge-success">{{ account.balance|floatformat:2 }} (переплата)</span>
+        {% else %}
+            <span class="badge badge-muted">0.00</span>
+        {% endif %}
+    </p>
     <p class="muted">
         Услуги на этом ЛС:
         {% for s in account.services.all %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% empty %}не выбраны — начисления не сформируются{% endfor %}
@@ -107,8 +114,9 @@
         <input type="month" name="period" required value="{% now 'Y-m' %}">
         <button class="btn btn-sm" type="submit">Сформировать начисление за период</button>
     </form>
+    <div class="table-scroll">
     <table>
-        <thead><tr><th>Период</th><th>Вход. сальдо</th><th>Начислено</th><th>Оплачено</th><th>Исх. сальдо</th><th>Квитанция</th></tr></thead>
+        <thead><tr><th>Период</th><th>Вход. сальдо</th><th>Начислено</th><th>Оплачено</th><th>Исх. сальдо</th><th>Статус</th><th>Квитанция</th><th></th></tr></thead>
         <tbody>
         {% for charge in charges %}
             <tr>
@@ -117,6 +125,10 @@
                 <td class="mono">{{ charge.accrued_total|floatformat:2 }}</td>
                 <td class="mono">{{ charge.paid_total|floatformat:2 }}</td>
                 <td class="mono">{{ charge.closing_balance|floatformat:2 }}</td>
+                <td>
+                    {% if charge.status == "final" %}<span class="badge badge-success">Проведено</span>
+                    {% else %}<span class="badge badge-muted">Черновик</span>{% endif %}
+                </td>
                 <td>
                     {% if charge.receipt %}
                         <a href="{{ charge.receipt.file.url }}">скачать PDF</a>
@@ -127,12 +139,22 @@
                         </form>
                     {% endif %}
                 </td>
+                <td>
+                    {% if charge.status != "final" %}
+                    <form method="post" action="{% url 'billing:charge_finalize' charge.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'accounts:detail' account.pk %}">
+                        <button class="btn btn-sm btn-secondary" type="submit">Провести</button>
+                    </form>
+                    {% endif %}
+                </td>
             </tr>
         {% empty %}
-            <tr><td colspan="6" class="muted">Начислений пока нет.</td></tr>
+            <tr><td colspan="8" class="muted">Начислений пока нет.</td></tr>
         {% endfor %}
         </tbody>
     </table>
+    </div>
 </div>
 
 <div class="card">
